@@ -1,0 +1,14 @@
+language: scala
+jdk: oraclejdk7
+
+scala:
+   - 2.11.5
+
+script:
+- sbt -Xms1508M -Xmx12288M -Xss1M -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=724M clean coverage test
+- sbt coverageReport
+- sbt coverageAggregate
+- sbt codacyCoverage
+
+notifications:
+  slack: ihealthtechnologies:0y49iFiXZjQyfDpHHWtgyswN#nexgen-build
