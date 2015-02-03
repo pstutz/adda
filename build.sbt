@@ -22,3 +22,13 @@ EclipseKeys.createSrc := EclipseCreateSrc.Default + EclipseCreateSrc.Resource
 
 // Makes the source code of dependencies accessible in Eclipse projects. 
 EclipseKeys.withSource := true
+
+// Publish artifact to Artifactory
+credentials += Credentials("Artifactory Realm", "ihealthtechnologies.artifactoryonline.com", System.getenv("ARTIFACTORY_USER"), System.getenv("ARTIFACTORY_PASSWORD"))
+publishTo := {
+  val url = System.getenv("ARTIFACTORY_URL")
+  if (isSnapshot.value)
+  Some("snapshots" at url + "libs-snapshots-local")
+    else
+  Some("releases" at url + "libs-releases-local")
+}
