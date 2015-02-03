@@ -1,7 +1,5 @@
 package com.adda.messages
 
-import scala.util.Try
-
 sealed trait Request
 
 //TODO: Move to stream store. 
