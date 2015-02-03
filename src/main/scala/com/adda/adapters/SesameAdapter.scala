@@ -9,9 +9,9 @@ import com.adda.messages.Triple
 
 class SesameAdapter extends TripleStore {
 
-  private val sesame = new SailRepository(new MemoryStore)
+  private[this] val sesame = new SailRepository(new MemoryStore)
   sesame.initialize
-  private val valueFactory = sesame.getValueFactory
+  private[this] val valueFactory = sesame.getValueFactory
 
   /**
    * Executes SPARQL select query `query'.
