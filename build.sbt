@@ -25,6 +25,9 @@ EclipseKeys.withSource := true
 
 // Publish artifact to Artifactory
 credentials += Credentials("Artifactory Realm", "ihealthtechnologies.artifactoryonline.com", System.getenv("ARTIFACTORY_USER"), System.getenv("ARTIFACTORY_PASSWORD"))
+
+publishMavenStyle := true
+
 publishTo := {
   val url = System.getenv("ARTIFACTORY_URL")
   if (isSnapshot.value)
