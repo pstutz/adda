@@ -11,4 +11,5 @@ trait PubSub {
 
   def getGraphPublicationSink[C <: GraphSerializable]: Sink[C]
 
+
 }
