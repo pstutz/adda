@@ -5,6 +5,7 @@ import akka.actor.{Props, ActorSystem}
 import akka.stream.actor.{ActorPublisher, ActorSubscriber}
 import akka.stream.scaladsl.{SubscriberSink, Sink, Source}
 import akka.stream.ActorFlowMaterializer
+import com.adda.Adda
 
 /**
  * Created by jmohammed on 09/02/15.
@@ -44,5 +45,13 @@ object TrialRunDirectPubSub extends App {
   }
 }
 
+object Test extends App {
+  val adda = new Adda
+  implicit val system = adda.system
+  implicit val materializer = ActorFlowMaterializer()
+  adda.subscribeToSource[ClaimLine]
+    .map { claimLine => println("Yo, I'm handlin' mad claim linez here: " + claimLine); claimLine.toString }
+    .runWith(adda.getPublicationSink[String])
+}
 
 

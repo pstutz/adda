@@ -5,7 +5,7 @@ import com.adda.interfaces.GraphSerializable
 import com.adda.interfaces.PubSub
 import com.adda.interfaces.SparqlSelect
 import com.adda.interfaces.TripleStore
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, Actor, ActorSystem, Props}
 import akka.stream.FlowMaterializer
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Broadcast
@@ -13,7 +13,6 @@ import akka.stream.scaladsl.Source
 import akka.stream.ActorFlowMaterializer
 import com.adda.entities.Pricer
 import com.adda.entities.GeneralSource
-import akka.actor.Props
 import akka.stream.actor.ActorSubscriber
 import com.adda.entities.ClaimLine
 import akka.stream.actor.ActorPublisher
@@ -54,6 +53,11 @@ class Adda extends PubSub with SparqlSelect {
   }
 
   def getPublicationSink[C]: Sink[C] = {
+    Sink.apply(subscriber)
+  }
+
+  def getPublicationSink[C](actorSubscriber: ActorRef) = {
+    val subscriber = ActorSubscriber[Any](actorSubscriber)
     Sink.apply(subscriber)
   }
 

@@ -39,7 +39,7 @@ class ClaimLinePublisher extends ActorPublisher[ClaimLine] with ActorLogging {
 
 
 class Pricer(delay: Long) extends ActorSubscriber with ActorLogging {
-  val requestStrategy = WatermarkRequestStrategy(50)
+  val requestStrategy = WatermarkRequestStrategy(1)
 
   def receive = {
     case OnNext(claimline: ClaimLine) =>
