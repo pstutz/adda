@@ -31,7 +31,7 @@ class Adda extends PubSub with SparqlSelect {
   private[this] implicit val materializer = ActorFlowMaterializer()
 
   private[this] val subscriberActor = system.actorOf(Props(new GeneralSink()))
-  private[this] val subscriber = ActorSubscriber[AnyRef](subscriberActor)
+  private[this] val subscriber = ActorSubscriber[Any](subscriberActor)
 
   /**
    * Executes SPARQL select query `query'.
@@ -53,8 +53,8 @@ class Adda extends PubSub with SparqlSelect {
     source
   }
 
-  def getPublicationSink[C]: Sink[C] = ???
-
-  def getGraphPublicationSink[C <: GraphSerializable]: Sink[C] = ???
+  def getPublicationSink[C]: Sink[C] = {
+    Sink.apply(subscriber)
+  }
 
 }
