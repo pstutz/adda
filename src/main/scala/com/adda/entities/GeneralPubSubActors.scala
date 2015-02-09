@@ -1,18 +1,18 @@
 package com.adda.entities
 
 import akka.stream.actor.WatermarkRequestStrategy
-import akka.actor.ActorLogging
+import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.stream.actor.ActorSubscriber
 import akka.stream.actor.ActorPublisherMessage.Request
 import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.Cancel
 import java.util.concurrent.LinkedBlockingQueue
-import akka.actor.ActorRef
 
 case class AddaEntity(entity: AnyRef)
 
 case class AddFeedPublisher(publisher: ActorRef)
+
 
 class GeneralSource extends ActorPublisher[AnyRef] with ActorLogging {
 

@@ -46,6 +46,8 @@ class Pricer(delay: Long) extends ActorSubscriber with ActorLogging {
   def receive = {
     case OnNext(claimline: ClaimLine) =>
       log.debug("[Pricer] Received  Claim line: {}", claimline)
+      val pricedClaimLine = priceClaimLine(claimline)
+      log.debug("[Pricer] priced the claim line: {}",pricedClaimLine)
       Thread.sleep(delay)
     case OnError(err: Exception) =>
       log.error(err, "[Pricer] Receieved Exception in Pricer")
@@ -54,5 +56,9 @@ class Pricer(delay: Long) extends ActorSubscriber with ActorLogging {
       log.info("[Pricer] Claim Line Stream Completed!")
       context.stop(self)
     case _ =>
+  }
+
+  def priceClaimLine(claimline: ClaimLine) = {
+    claimline.line.+("price" -> "25.00")
   }
 }
