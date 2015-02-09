@@ -9,13 +9,15 @@ import akka.actor.ActorSystem
 import akka.stream.FlowMaterializer
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Broadcast
+import akka.stream.scaladsl.Source
+import akka.stream.ActorFlowMaterializer
 
 class Adda extends PubSub with SparqlSelect {
 
   private[this] val store: TripleStore = new SesameAdapter
-  private[this] val system: ActorSystem = ActorSystem("Adda")
+  private[this] implicit val system: ActorSystem = ActorSystem("Adda")
 
-  implicit val materializer = FlowMaterializer()(system)
+  implicit val materializer = ActorFlowMaterializer()
 
   /**
    * Executes SPARQL select query `query'.
