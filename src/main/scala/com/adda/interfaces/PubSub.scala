@@ -6,7 +6,7 @@ import scala.reflect.ClassTag
 
 trait PubSub {
   
-  def subscribeToSource[C: ClassTag](c: Class[C]): Source[C]
+  def subscribeToSource[C: ClassTag]: Source[C]
 
   def getPublicationSink[C]: Sink[C]
 
