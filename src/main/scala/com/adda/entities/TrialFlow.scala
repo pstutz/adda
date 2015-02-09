@@ -2,31 +2,30 @@ package com.adda.entities
 
 
 import akka.actor.{Props, ActorSystem}
+import akka.stream.FlowMaterializer
 import akka.stream.actor.{ActorPublisher, ActorSubscriber}
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.scaladsl.{SubscriberSink, Sink, Source}
 
 /**
  * Created by jmohammed on 09/02/15.
  */
-//object TrialFlow  extends App{
-//
-//  implicit val system = ActorSystem("test-system")
-//  val subscriber = system.actorOf(Props[SampleSubscriber],"sample-subscriber")
-//
-//  implicit val mat = FlowMaterializer()
-//  val foreachSink = Sink.foreach[Int](println)
-//
-//  Source(1 to 100).sub
-//
-////  Source(1 to 100).filter(_%2 == 0).runWith(foreachSink)(mat)
-//
-//
-//  Source(1 to 100).filter(_%2 == 0).runWith(subscriber)
-//
-//}
+object TrialFlow  extends App{
+
+  implicit val system = ActorSystem("test-system")
+  val publisherActor = system.actorOf(Props[ClaimLinePublisher])
+  val publisher = ActorPublisher[ClaimLine](publisherActor)
+
+  implicit val mat = FlowMaterializer()
+
+  val subscriberActor = system.actorOf(Props(new Pricer(5)))
+  val subscriber = ActorSubscriber[ClaimLine](subscriberActor)
+
+  Source(publisher).runWith(SubscriberSink(subscriber))(mat)
+
+}
 
 
-object TrialFlow extends App {
+object TrialRunDirectPubSub extends App {
   val system = ActorSystem("example-stream-system")
 
   startSimplePubSubExample(system)
