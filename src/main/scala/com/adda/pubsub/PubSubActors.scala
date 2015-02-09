@@ -19,20 +19,17 @@ case class CreatePublisher[C: ClassTag]() {
 
 class BroadcastActor extends Actor with ActorLogging {
 
-  val publishers = context.children
-
-  var lastSource: ActorRef = null.asInstanceOf[ActorRef]
+  var publishers = List.empty[ActorRef]
 
   def receive = {
     case c @ CreatePublisher() =>
       log.debug(s"[BroadcastActor] Received ${c.props}.")
       val publisherActor = context.actorOf(c.props)
-      lastSource = publisherActor
+      publishers = publisherActor :: publishers
       sender ! publisherActor
     case a @ AddaEntity(e) =>
       log.debug(s"[BroadcastActor] Received $e, children = ${context.children.mkString(",")}.")
       publishers.foreach(_ ! a)
-      lastSource ! a
     case other => throw new Exception(s"[BroadcastActor] Received unhandled $other.")
   }
 }
