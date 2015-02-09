@@ -9,8 +9,6 @@ trait PubSub {
   
   def subscribeToSource[C: ClassTag]: Source[C]
 
-  def subscribeToSource[C: ClassTag](actorPublisher: ActorRef): Source[C]
-
   def getPublicationSink[C]: Sink[C]
 
 }
