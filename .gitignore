@@ -24,3 +24,5 @@ target/*
 .idea/*
 
 target/*
+
+.settings/org.scala-ide.sdt.core.prefs
