@@ -11,22 +11,18 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Broadcast
 import akka.stream.scaladsl.Source
 import akka.stream.ActorFlowMaterializer
-import com.adda.entities.Pricer
-import com.adda.entities.GeneralSource
+import com.adda.entities._
 import akka.stream.actor.ActorSubscriber
-import com.adda.entities.ClaimLine
 import akka.stream.actor.ActorPublisher
-import com.adda.entities.GeneralSink
 import akka.stream.scaladsl.FlowGraphImplicits
 import akka.stream.scaladsl.FlowGraph
 import akka.stream.scaladsl.Flow
-import com.adda.entities.AddFeedPublisher
 import scala.reflect.ClassTag
 
 class Adda extends PubSub with SparqlSelect {
 
   private[this] val store: TripleStore = new SesameAdapter
-  private[this] implicit val system: ActorSystem = ActorSystem("Adda")
+  implicit val system: ActorSystem = ActorSystem("Adda")
   private[this] implicit val materializer = ActorFlowMaterializer()
 
   private[this] val subscriberActor = system.actorOf(Props(new GeneralSink()))
@@ -52,6 +48,15 @@ class Adda extends PubSub with SparqlSelect {
     source
   }
 
+  def subscribeToSource[C: ClassTag](actorPublisher: ActorRef): Source[C] = {
+    val publisher = ActorPublisher[AnyRef](actorPublisher)
+    val clazz: Class[_] = implicitly[ClassTag[C]].runtimeClass
+    val source = Source(publisher)
+      .filter { entity => clazz.isAssignableFrom(entity.getClass) }
+      .map { _.asInstanceOf[C] }
+    source
+  }
+
   def getPublicationSink[C]: Sink[C] = {
     Sink.apply(subscriber)
   }
@@ -61,4 +66,14 @@ class Adda extends PubSub with SparqlSelect {
     Sink.apply(subscriber)
   }
 
+}
+
+object TrialFlowUsingAdda extends App {
+  val adda = new Adda
+  implicit val system = adda.system
+  implicit val materializer = ActorFlowMaterializer()
+  val publisherActor = system.actorOf(Props[GeneralSource])
+  publisherActor ! AddaEntity(ClaimLine(Map("cptCode" -> "A2015", "dos" -> "20140201")))
+  val subscriberActor = system.actorOf(Props(new Pricer(5)))
+  adda.subscribeToSource[ClaimLine](publisherActor).runWith(adda.getPublicationSink(subscriberActor))(materializer)
 }

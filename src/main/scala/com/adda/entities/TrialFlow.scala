@@ -23,6 +23,8 @@ object TrialFlow  extends App{
 
   Source(publisher).runWith(SubscriberSink(subscriber))(mat)
 
+
+
 }
 
 
@@ -45,13 +47,7 @@ object TrialRunDirectPubSub extends App {
   }
 }
 
-object Test extends App {
-  val adda = new Adda
-  implicit val system = adda.system
-  implicit val materializer = ActorFlowMaterializer()
-  adda.subscribeToSource[ClaimLine]
-    .map { claimLine => println("Yo, I'm handlin' mad claim linez here: " + claimLine); claimLine.toString }
-    .runWith(adda.getPublicationSink[String])
-}
+
+
 
 
