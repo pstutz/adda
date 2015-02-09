@@ -1,15 +1,22 @@
 package com.adda.pubsub
 
-import akka.stream.actor.WatermarkRequestStrategy
-import akka.actor.{ Actor, ActorLogging, ActorRef }
-import akka.stream.actor.ActorSubscriber
-import akka.stream.actor.ActorPublisherMessage.Request
-import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
+import java.util.concurrent.LinkedBlockingQueue
+
+import scala.reflect.ClassTag
+
+import akka.actor.Actor
+import akka.actor.ActorLogging
+import akka.actor.ActorRef
+import akka.actor.Props
+import akka.actor.actorRef2Scala
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.Cancel
-import java.util.concurrent.LinkedBlockingQueue
-import scala.reflect.ClassTag
-import akka.actor.Props
+import akka.stream.actor.ActorPublisherMessage.Request
+import akka.stream.actor.ActorSubscriber
+import akka.stream.actor.ActorSubscriberMessage.OnComplete
+import akka.stream.actor.ActorSubscriberMessage.OnError
+import akka.stream.actor.ActorSubscriberMessage.OnNext
+import akka.stream.actor.WatermarkRequestStrategy
 
 case class AddaEntity[C: ClassTag](entity: C)
 
@@ -21,13 +28,12 @@ class BroadcastActor extends Actor with ActorLogging {
 
   def receive = {
     case c @ CreatePublisher() =>
-      log.debug(s"[BroadcastActor] Received ${c.props}.")
       val publisherActor = context.actorOf(c.props)
       sender ! publisherActor
     case a @ AddaEntity(e) =>
-      log.debug(s"[BroadcastActor] Received $e, children = ${context.children.mkString(",")}.")
       context.children.foreach(_ ! a)
-    case other => throw new Exception(s"[BroadcastActor] Received unhandled $other.")
+    case other =>
+      log.error(s"[BroadcastActor] received unhandled message $other.")
   }
 
 }
@@ -40,28 +46,21 @@ class SourceActor[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
 
   def receive = {
     case a @ AddaEntity(e) =>
-      log.debug(s"[SourceActor] Received AddaEntity($e).")
       if (publishedClass.isAssignableFrom(e.getClass)) {
         queue.put(e.asInstanceOf[C])
-        log.info(s"[SourceActor] Put $e into the queue!!!")
         publishNext()
-      } else {
-        log.info(s"[SourceActor] $e has class ${e.getClass.getName}, which did not match ${publishedClass.getName}.")
       }
-
     case Request(cnt) =>
-      log.debug(s"[SourceActor] Received Request($cnt).")
       publishNext()
     case Cancel =>
-      log.info("[SourceActor] Cancel Message Received -- Stopping.")
       context.stop(self)
-    case other => throw new Exception(s"[SourceActor] Received unhandled $other.")
+    case other =>
+      log.error(s"[SourceActor] received unhandled message $other.")
   }
 
   def publishNext() {
     while (!queue.isEmpty && isActive && totalDemand > 0) {
       val next = queue.take
-      log.info(s"[SourceActor] I'm publishing $next!!!")
       onNext(next)
     }
   }
@@ -73,14 +72,12 @@ class SinkActor(val broadcastActor: ActorRef) extends ActorSubscriber with Actor
 
   def receive = {
     case OnNext(next: AnyRef) =>
-      log.debug(s"[SinkActor] Received OnNext($next).")
       broadcastActor ! AddaEntity(next)
     case OnError(err: Exception) =>
-      log.error(err, s"[SinkActor] Received Exception $err.")
       context.stop(self)
     case OnComplete =>
-      log.info(s"[SinkActor] Stream Completed!")
       context.stop(self)
-    case other => throw new Exception(s"[SinkActor] Received unhandled $other.")
+    case other =>
+      log.error(s"[SinkActor] received unhandled message $other.")
   }
 }
