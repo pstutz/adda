@@ -2,9 +2,9 @@ package com.adda.entities
 
 
 import akka.actor.{Props, ActorSystem}
-import akka.stream.FlowMaterializer
 import akka.stream.actor.{ActorPublisher, ActorSubscriber}
 import akka.stream.scaladsl.{SubscriberSink, Sink, Source}
+import akka.stream.ActorFlowMaterializer
 
 /**
  * Created by jmohammed on 09/02/15.
@@ -15,7 +15,7 @@ object TrialFlow  extends App{
   val publisherActor = system.actorOf(Props[ClaimLinePublisher])
   val publisher = ActorPublisher[ClaimLine](publisherActor)
 
-  implicit val mat = FlowMaterializer()
+  implicit val mat = ActorFlowMaterializer()
 
   val subscriberActor = system.actorOf(Props(new Pricer(5)))
   val subscriber = ActorSubscriber[ClaimLine](subscriberActor)
