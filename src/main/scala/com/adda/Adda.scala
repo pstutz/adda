@@ -41,7 +41,7 @@ class Adda extends PubSub with SparqlSelect {
     store.executeSparqlSelect(query)
   }
 
-  def subscribeToSource[C: ClassTag](c: Class[C]): Source[C] = {
+  def subscribeToSource[C: ClassTag]: Source[C] = {
     val publisherActor = system.actorOf(Props[GeneralSource])
     val publisher = ActorPublisher[AnyRef](publisherActor)
     val clazz: Class[_] = implicitly[ClassTag[C]].runtimeClass
