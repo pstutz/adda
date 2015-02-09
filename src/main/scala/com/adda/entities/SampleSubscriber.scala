@@ -14,6 +14,8 @@ import ActorPublisherMessage._
 
 case class ClaimLine(line: Map[String, String])
 
+case class Recommendation(line: Map[String, String])
+
 class ClaimLinePublisher extends ActorPublisher[ClaimLine] with ActorLogging {
 
   def receive = {

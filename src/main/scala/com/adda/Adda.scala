@@ -74,6 +74,7 @@ object TrialFlowUsingAdda extends App {
   implicit val materializer = ActorFlowMaterializer()
   val publisherActor = system.actorOf(Props[GeneralSource])
   publisherActor ! AddaEntity(ClaimLine(Map("cptCode" -> "A2015", "dos" -> "20140201")))
+  publisherActor ! AddaEntity(Recommendation(Map("cptCode" -> "A2015", "dos" -> "20140201", "recommendedCptCode" -> "A2195")))
   val subscriberActor = system.actorOf(Props(new Pricer(5)))
   adda.subscribeToSource[ClaimLine](publisherActor).runWith(adda.getPublicationSink(subscriberActor))(materializer)
 }
