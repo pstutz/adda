@@ -2,14 +2,7 @@ package com.adda.interfaces
 
 import com.adda.messages.Triple
 
-trait TripleStore {
-
-  /**
-   * Executes SPARQL select query `query'.
-   *
-   * @return an iterator of query results.
-   */
-  def executeSparqlSelect(query: String): Iterator[String => String]
+trait TripleStore extends SparqlSelect {
 
   /**
    * Add a triple `t' to the store.

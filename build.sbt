@@ -13,6 +13,8 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.2.3" % "test"
 )
 
+scalacOptions ++= Seq("-feature") // Show feature warnings.
+
 resolvers ++= Seq(
   "Ifi Public" at "https://maven.ifi.uzh.ch/maven2/content/groups/public/"
 )

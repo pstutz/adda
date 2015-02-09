@@ -1,4 +1,5 @@
 .settings
+
 .cache
 
 .classpath
@@ -24,4 +25,7 @@ target/*
 .idea/*
 
 target/*
+
 /target/
+
+.settings/org.scala-ide.sdt.core.prefs
