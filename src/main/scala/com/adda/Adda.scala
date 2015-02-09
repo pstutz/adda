@@ -31,7 +31,8 @@ class Adda extends PubSub with SparqlSelect {
   private[this] val universalBroadcast = Broadcast[AnyRef]
 
   def subscribeToSource[C](c: Class[C]): Source[C] = {
-    universalBroadcast.filter(_.isInstanceOf[C])
+    //universalBroadcast.filter(_.isInstanceOf[C])
+    ???
   }
 
   def getPublicationSink[C]: Sink[C] = ???
