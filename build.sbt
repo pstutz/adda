@@ -11,6 +11,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream-experimental" % "1.0-M3" % "compile",
   "org.openrdf.sesame" % "sesame-repository-sail" % "2.8.0" % "compile",
   "org.openrdf.sesame" % "sesame-sail-memory" % "2.8.0" % "compile", 
+  "org.slf4j" % "slf4j-nop" % "1.7.6" % "compile",
   "org.scalatest" %% "scalatest" % "2.2.3" % "test"
 )
 
