@@ -19,4 +19,10 @@ trait PubSub {
    */
   def getPublicationSink[C]: Sink[C]
 
+  /**
+   * Blocking call that returns once the pub/sub infrastructure has shut down.
+   * Shutdown closes all stream sources.
+   */
+  def shutdown()
+
 }
