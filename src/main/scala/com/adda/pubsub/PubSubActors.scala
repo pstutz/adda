@@ -15,7 +15,7 @@ case class AddaEntity[C: ClassTag](entity: C)
 
 case class CreatePublisher[C: ClassTag]() {
   val props = Props(new SourceActor[C]())
-  val name = ???
+  val name = "publisher"
 }
 
 class BroadcastActor extends Actor with ActorLogging {
@@ -24,7 +24,7 @@ class BroadcastActor extends Actor with ActorLogging {
   def receive = {
     case c@CreatePublisher() =>
       //TODO: Get a naming convention here
-      val publisherActor = context.actorOf(c.props, "")
+      val publisherActor = context.actorOf(c.props, c.name)
       sender ! publisherActor
     case a @ AddaEntity(e) => {
       try {
