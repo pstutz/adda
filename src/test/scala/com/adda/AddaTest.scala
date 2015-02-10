@@ -20,5 +20,4 @@ class AddaTest extends FlatSpec {
     assert(sink.isInstanceOf[Sink[String]])
   }
 
-
 }
