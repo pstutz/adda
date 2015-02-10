@@ -56,7 +56,7 @@ class Adda extends PubSub with SparqlSelect {
    * Does not publish subclasses of `C'.
    */
   def subscribeToSource[C: ClassTag]: Source[C] = {
-    val publisher = createPublisher[C]
+    val publisher = getPublisher[C]
     val source = Source(publisher)
     source
   }
@@ -66,12 +66,12 @@ class Adda extends PubSub with SparqlSelect {
    * Does not allow publishing subclasses of `C'.
    */
   def getPublicationSink[C]: Sink[C] = {
-    val subscriber = createSubscriber[C]
+    val subscriber = getSubscriber[C]
     val sink = Sink(subscriber)
     sink
   }
 
-  private[this] def createPublisher[C: ClassTag]: Publisher[C] = {
+  private[this] def getPublisher[C: ClassTag]: Publisher[C] = {
     import system.dispatcher
     implicit val timeout = Timeout(5.seconds)
     val publisherActorFuture = broadcastActor ? CreatePublisher[C]()
@@ -79,7 +79,7 @@ class Adda extends PubSub with SparqlSelect {
     Await.result(publisherFuture, 5.seconds)
   }
 
-  private[this] def createSubscriber[C]: Subscriber[C] = {
+  private[this] def getSubscriber[C]: Subscriber[C] = {
     val subscriberActor = system.actorOf(Props(new SinkActor(broadcastActor)))
     val subscriber = ActorSubscriber[C](subscriberActor)
     subscriber
