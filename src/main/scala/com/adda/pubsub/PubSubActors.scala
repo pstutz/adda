@@ -28,8 +28,7 @@ case object CompleteAllPublishers
 
 case class CreatePublisher[C: ClassTag]() {
   val props = Props(new SourceActor[C]())
-  //TODO: Take this method out, it's being used at many places
-  val name = implicitly[ClassTag[C]].runtimeClass.getName
+  val className = implicitly[ClassTag[C]].runtimeClass.getName
 }
 
 class BroadcastActor(private[this] val store: TripleStore) extends Actor with ActorLogging {
@@ -37,7 +36,7 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
 
   def receive = {
     case c @ CreatePublisher() =>
-      val publisherActor = context.actorOf(c.props, c.name)
+      val publisherActor = context.actorOf(c.props, c.className)
       sender ! publisherActor
     case a @ AddaEntity(e) => {
       try {
