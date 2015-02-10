@@ -54,10 +54,10 @@ WHERE {
       .via(queryApp)
       .runFold(List.empty[String => String]) { case (aggr, next) => aggr ::: next }
 
-    Thread.sleep(8000)
+    Thread.sleep(10000)
     adda.shutdown
 
-    val bindingsList = Await.result(bindingsListFuture, 5.seconds)
+    val bindingsList = Await.result(bindingsListFuture, 10.seconds)
 
     bindingsList.size should be(1)
     val bindings = bindingsList.head
