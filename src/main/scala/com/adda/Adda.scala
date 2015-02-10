@@ -1,8 +1,5 @@
 package com.adda
 
-import akka.stream.actor.ActorPublisherMessage.Cancel
-import akka.stream.actor.ActorSubscriberMessage.OnComplete
-
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
@@ -14,9 +11,15 @@ import com.adda.adapters.SesameAdapter
 import com.adda.interfaces.PubSub
 import com.adda.interfaces.SparqlSelect
 import com.adda.interfaces.TripleStore
-import com.adda.pubsub.{CompleteAllPublishers, BroadcastActor, CreatePublisher, SinkActor}
+import com.adda.pubsub.BroadcastActor
+import com.adda.pubsub.CompleteAllPublishers
+import com.adda.pubsub.CreatePublisher
+import com.adda.pubsub.SinkActor
 
-import akka.actor.{Kill, ActorRef, ActorSystem, Props}
+import akka.actor.ActorRef
+import akka.actor.ActorSystem
+import akka.actor.Props
+import akka.actor.actorRef2Scala
 import akka.pattern.ask
 import akka.stream.ActorFlowMaterializer
 import akka.stream.actor.ActorPublisher
@@ -52,9 +55,8 @@ class Adda extends PubSub with SparqlSelect {
 
   /**
    * Returns an Akka Streams source that is subscribed to all published objects of class `C'.
-   * Does not publish subclasses of `C'.
    */
-  def subscribeToSource[C: ClassTag]: Source[C] = {
+  def getSource[C: ClassTag]: Source[C] = {
     val publisher = getPublisher[C]
     val source = Source(publisher)
     source
@@ -62,9 +64,8 @@ class Adda extends PubSub with SparqlSelect {
 
   /**
    * Returns an Akka Streams sink that allows to publish objects of class `C'.
-   * Does not allow publishing subclasses of `C'.
    */
-  def getPublicationSink[C]: Sink[C] = {
+  def getSink[C]: Sink[C] = {
     val subscriber = getSubscriber[C]
     val sink = Sink(subscriber)
     sink
@@ -77,6 +78,7 @@ class Adda extends PubSub with SparqlSelect {
   def shutdown() {
     broadcastActor ! CompleteAllPublishers
     system.shutdown()
+    system.awaitTermination()
   }
 
   private[this] def getPublisher[C: ClassTag]: Publisher[C] = {
