@@ -19,11 +19,7 @@ class SinkActor(private[this] val broadcastActor: ActorRef) extends ActorSubscri
     case OnNext(next: AnyRef) =>
       log.debug(s"[SinkActor] received new message $next.")
       broadcastActor ! AddaEntity(next)
-    case OnError(err: Exception) =>
-      context.stop(self)
     case OnComplete =>
       context.stop(self)
-    case other =>
-      log.error(s"[SinkActor] received unhandled message $other.")
   }
 }

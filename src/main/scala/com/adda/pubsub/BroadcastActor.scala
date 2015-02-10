@@ -41,8 +41,6 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
       context.children.foreach(_ ! a)
     case CompleteAllPublishers =>
       context.children.map(_ ! Complete)
-    case other =>
-      log.error(s"[BroadcastActor] received unhandled message $other.")
   }
 
 }

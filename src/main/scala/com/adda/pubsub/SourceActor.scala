@@ -3,17 +3,15 @@ package com.adda.pubsub
 import scala.collection.mutable
 import scala.language.postfixOps
 import scala.reflect.ClassTag
-
 import akka.actor.ActorLogging
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.Cancel
 import akka.stream.actor.ActorPublisherMessage.Request
+import akka.actor.UnhandledMessage
 
 final case object Complete
 
 class SourceActor[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
-
-  private[this] val className = implicitly[ClassTag[C]].runtimeClass.getName
 
   private[this] val queue = mutable.Queue.empty[C]
 
@@ -32,8 +30,6 @@ class SourceActor[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
       context.stop(self)
     case Cancel =>
       context.stop(self)
-    case other =>
-      log.error(s"[SourceActor] received unhandled message $other.")
   }
 
   def publishNext() {
