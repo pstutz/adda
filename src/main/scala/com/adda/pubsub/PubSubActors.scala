@@ -28,17 +28,29 @@ case class AddaEntity[C: ClassTag](entity: C)
 
 case class CreatePublisher[C: ClassTag]() {
   val props = Props(new SourceActor[C]())
+  //TODO: Take this method out, it's being used at many places
+  val name = implicitly[ClassTag[C]].runtimeClass.getName
 }
 
 class BroadcastActor(private[this] val store: TripleStore) extends Actor with ActorLogging {
-  private[this] implicit val timeout = Timeout(10 seconds)
+  private[this] implicit val timeout = Timeout(20 seconds)
 
   def receive = {
     case c @ CreatePublisher() =>
-      //TODO: Get a naming convention here
-      val publisherActor = context.actorOf(c.props)
+      val publisherActor = context.actorOf(c.props, c.name)
       sender ! publisherActor
     case a @ AddaEntity(e) => {
+      try {
+        Await.result(context.actorSelection(e.getClass.getName).resolveOne, timeout.duration)
+      } catch {
+        case ex: akka.actor.ActorNotFound => {
+          val clazz = e.getClass
+          val props = Props(new SourceActor[ClassTag[clazz.type]]())
+          context.actorOf(props, clazz.getName)
+        }
+          //TODO: Check for other non-fatal exceptions
+      }
+      
       e match {
         // If the entity is graph serializable, add it to the store.
         case g: GraphSerializable =>
