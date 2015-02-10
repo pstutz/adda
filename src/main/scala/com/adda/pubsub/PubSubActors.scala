@@ -22,7 +22,7 @@ import akka.stream.actor.ActorSubscriberMessage.{OnComplete, OnError, OnNext}
 import akka.stream.actor.WatermarkRequestStrategy
 import akka.util.Timeout
 
-case class AddaEntity[C: ClassTag](entity: C)
+case class AddaEntity[C](entity: C)
 
 case object CompleteAllPublishers
 
