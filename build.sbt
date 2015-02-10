@@ -10,7 +10,8 @@ libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-library" % scalaVersion.value % "compile",
   "com.typesafe.akka" %% "akka-stream-experimental" % "1.0-M3" % "compile",
   "org.openrdf.sesame" % "sesame-runtime" % "2.7.14" % "compile",
-  "org.scalatest" %% "scalatest" % "2.2.3" % "test"
+  "org.scalatest" %% "scalatest" % "2.2.3" % "test",
+  "com.typesafe.akka" %% "akka-http-core-experimental" % "1.0-M2"
 )
 
 scalacOptions ++= Seq("-feature") // Show feature warnings.
