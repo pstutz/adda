@@ -7,35 +7,26 @@ import akka.stream.actor.{ActorPublisher, ActorSubscriber, WatermarkRequestStrat
 import akka.util.Timeout
 
 import scala.collection.mutable
-import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
-import scala.reflect.ClassTag
 import scala.language.postfixOps
+import scala.reflect.ClassTag
 
 case class AddaEntity[C: ClassTag](entity: C)
 
 case class CreatePublisher[C: ClassTag]() {
   val props = Props(new SourceActor[C]())
-  val name = "publisher"
 }
 
 class BroadcastActor extends Actor with ActorLogging {
   implicit val timeout = Timeout(10 seconds)
 
   def receive = {
-    case c@CreatePublisher() =>
+    case c @ CreatePublisher() =>
       //TODO: Get a naming convention here
-      val publisherActor = context.actorOf(c.props, c.name)
+      val publisherActor = context.actorOf(c.props)
       sender ! publisherActor
-    case a @ AddaEntity(e) => {
-      try {
-        Await.result(context.actorSelection(e.getClass.toString).resolveOne, timeout.duration)
-      } catch {
-        case ex: akka.actor.ActorNotFound => //context.actorOf(Props(new SourceActor[e.type]), e.getClass.toString)
-        case _ =>
-      }
+    case a @ AddaEntity(e) =>
       context.children.foreach(_ ! a)
-    }
     case other =>
       log.error(s"[BroadcastActor] received unhandled message $other.")
   }
