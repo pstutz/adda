@@ -35,9 +35,9 @@ import akka.util.Timeout
 class Adda extends PubSub with SparqlSelect {
 
   private[this] val store: TripleStore = new SesameAdapter
-  implicit val system: ActorSystem = ActorSystem("Adda")
+  private[this] implicit val system: ActorSystem = ActorSystem("Adda")
   private[this] implicit val materializer = ActorFlowMaterializer()
-  val broadcastActor = system.actorOf(Props(new BroadcastActor()))
+  private[this] val broadcastActor = system.actorOf(Props(new BroadcastActor()))
 
   /**
    * Executes SPARQL select query `query'.

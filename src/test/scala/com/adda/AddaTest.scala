@@ -5,6 +5,7 @@ import org.scalatest.FlatSpec
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 
+// TODO: We need to ensure these tests actually validate the inputs/outputs, not just the types.
 class AddaTest extends FlatSpec {
 
   // TODO(akanksha): This test cannot fail, because the generic type parameter List[String] is erased at runtime. 
@@ -19,6 +20,20 @@ class AddaTest extends FlatSpec {
     val adda = new Adda
     val sink = adda.getPublicationSink[String]
     assert(sink.isInstanceOf[Sink[String]])
+  }
+
+  "Adda" should "be able to run sparql query" in {
+    val adda = new Adda
+    val query =
+      """
+        |SELECT ?sub ?pred ?obj
+        |WHERE
+        |{
+        |?sub ?pred ?obj .
+        |}
+        |LIMIT 1
+      """.stripMargin
+    assert(adda.executeSparqlSelect(query).isInstanceOf[Iterator[String => String]])
   }
 
 }
