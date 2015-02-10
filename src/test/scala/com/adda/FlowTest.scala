@@ -23,17 +23,17 @@ object FlowTest extends App {
     }
 
   Source(List(List("cptCode -> A2015", "dos -> 20140201")))
-    .runWith(adda.getPublicationSink[List[String]])
+    .runWith(adda.getSink[List[String]])
 
-  adda.subscribeToSource[List[String]]
+  adda.getSource[List[String]]
     .via(listHandlingApp)
-    .runWith(adda.getPublicationSink[String])
+    .runWith(adda.getSink[String])
 
   val stringHandlingApp: Flow[String, Int] = Flow[String].map(f => 1)
 
-  adda.subscribeToSource[String]
+  adda.getSource[String]
     .via(stringHandlingApp)
-    .runWith(adda.getPublicationSink[Int])
+    .runWith(adda.getSink[Int])
 
   shutdown()
 
@@ -62,8 +62,8 @@ object FlowTestWithBcast extends App {
   val materializedFlow = FlowGraph { implicit builder =>
     import akka.stream.scaladsl.FlowGraphImplicits._
     val bcast = Broadcast[List[String]]
-    Source(List(List("cptCode -> A2015", "dos -> 20140201"))) ~> bcast ~> listHandlingApp ~> adda.getPublicationSink[String]
-    bcast ~> listHandlingAppToInt ~> adda.getPublicationSink[Int]
+    Source(List(List("cptCode -> A2015", "dos -> 20140201"))) ~> bcast ~> listHandlingApp ~> adda.getSink[String]
+    bcast ~> listHandlingAppToInt ~> adda.getSink[Int]
 
   }.run()
 
