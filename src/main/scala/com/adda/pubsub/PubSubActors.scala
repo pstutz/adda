@@ -72,6 +72,7 @@ class SinkActor(val broadcastActor: ActorRef) extends ActorSubscriber with Actor
 
   def receive = {
     case OnNext(next: AnyRef) =>
+      log.debug(s"[SinkActor] received new message $next.")
       broadcastActor ! AddaEntity(next)
     case OnError(err: Exception) =>
       context.stop(self)

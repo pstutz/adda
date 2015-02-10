@@ -16,10 +16,17 @@ object TrialFlow extends App {
       asString
     }
 
+  Source(List(List("cptCode -> A2015", "dos -> 20140201")))
+    .runWith(adda.getPublicationSink[List[String]])
+  
   adda.subscribeToSource[List[String]]
     .via(listHandlingApp)
     .runWith(adda.getPublicationSink[String])
 
-  Source(List(List("cptCode -> A2015", "dos -> 20140201")))
-    .runWith(adda.getPublicationSink[List[String]])
+  val stringHandlingApp: Flow[String, Int] = Flow[String].map(f => 1)
+
+  adda.subscribeToSource[String]
+      .via(stringHandlingApp)
+      .runWith(adda.getPublicationSink[Int])
+  
 }
