@@ -1,7 +1,6 @@
 package com.adda.pubsub
 
-import java.util.concurrent.LinkedBlockingQueue
-
+import scala.collection.mutable.Queue
 import scala.reflect.ClassTag
 
 import akka.actor.Actor
@@ -42,13 +41,15 @@ class SourceActor[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
 
   val publishedClass: Class[C] = implicitly[ClassTag[C]].runtimeClass.asInstanceOf[Class[C]]
 
-  val queue = new LinkedBlockingQueue[C]
+  val queue = Queue.empty[C]
 
   def receive = {
     case a @ AddaEntity(e) =>
-      if (publishedClass.isAssignableFrom(e.getClass)) {
-        queue.put(e.asInstanceOf[C])
-        publishNext()
+      e match {
+        case successfulMatch: C =>
+          queue += successfulMatch
+          publishNext()
+        case noMatch => // Do nothing.
       }
     case Request(cnt) =>
       publishNext()
@@ -60,7 +61,7 @@ class SourceActor[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
 
   def publishNext() {
     while (!queue.isEmpty && isActive && totalDemand > 0) {
-      val next = queue.take
+      val next = queue.dequeue
       onNext(next)
     }
   }
