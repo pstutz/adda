@@ -52,8 +52,6 @@ object FlowTestWithBcast extends App {
 
   val listHandlingAppToInt: Flow[List[String], Int] = Flow[List[String]].map(f => 1)
 
-  Source(List(List("cptCode -> A2015", "dos -> 20140201")))
-    .runWith(adda.getPublicationSink[List[String]])
 
   val materializedFlow = FlowGraph { implicit builder =>
     import akka.stream.scaladsl.FlowGraphImplicits._
