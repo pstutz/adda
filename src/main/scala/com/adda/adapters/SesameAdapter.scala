@@ -5,6 +5,7 @@ import org.openrdf.repository.sail.SailRepository
 import org.openrdf.sail.memory.MemoryStore
 import com.adda.interfaces.TripleStore
 import com.adda.interfaces.Triple
+import org.openrdf.repository.sail.SailRepositoryConnection
 
 class SesameAdapter extends TripleStore {
 
@@ -40,15 +41,7 @@ class SesameAdapter extends TripleStore {
    */
   def addTriple(t: Triple) {
     val c = sesame.getConnection
-    val s = valueFactory.createURI(t.s)
-    val p = valueFactory.createURI(t.p)
-    if (t.o.startsWith("http://")) {
-      val o = valueFactory.createURI(t.o)
-      c.add(s, p, o)
-    } else {
-      val o = valueFactory.createLiteral(t.o)
-      c.add(s, p, o)
-    }
+    addTripleWithConnection(t, c)
     c.close
   }
 
@@ -59,17 +52,21 @@ class SesameAdapter extends TripleStore {
   override def addTriples(triples: Iterator[Triple]) {
     val c = sesame.getConnection
     for (t <- triples) {
-      val s = valueFactory.createURI(t.s)
-      val p = valueFactory.createURI(t.p)
-      if (t.o.startsWith("http://")) {
-        val o = valueFactory.createURI(t.o)
-        c.add(s, p, o)
-      } else {
-        val o = valueFactory.createLiteral(t.o)
-        c.add(s, p, o)
-      }
+      addTripleWithConnection(t, c)
     }
     c.close
+  }
+
+  private[this] def addTripleWithConnection(t: Triple, c: SailRepositoryConnection) {
+    val s = valueFactory.createURI(t.s)
+    val p = valueFactory.createURI(t.p)
+    if (t.o.startsWith("http://")) {
+      val o = valueFactory.createURI(t.o)
+      c.add(s, p, o)
+    } else {
+      val o = valueFactory.createLiteral(t.o)
+      c.add(s, p, o)
+    }
   }
 
   def shutdown() {
