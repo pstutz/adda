@@ -9,9 +9,11 @@ import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.Cancel
 import akka.stream.actor.ActorPublisherMessage.Request
 
+final case object Complete
+
 class SourceActor[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
 
-  private[this] val publishedClass: Class[C] = implicitly[ClassTag[C]].runtimeClass.asInstanceOf[Class[C]]
+  private[this] val className = implicitly[ClassTag[C]].runtimeClass.getName
 
   private[this] val queue = mutable.Queue.empty[C]
 
@@ -25,6 +27,9 @@ class SourceActor[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
       }
     case Request(cnt) =>
       publishNext()
+    case Complete =>
+      onComplete()
+      context.stop(self)
     case Cancel =>
       context.stop(self)
     case other =>
