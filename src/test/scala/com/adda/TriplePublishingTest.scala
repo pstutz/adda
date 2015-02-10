@@ -1,5 +1,9 @@
 package com.adda
 
+import scala.concurrent.Await
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
+
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
@@ -9,12 +13,10 @@ import com.adda.interfaces.Triple
 import akka.actor.ActorSystem
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 
 case class TripleContainer(asGraph: List[Triple]) extends GraphSerializable
 
-// TODO: Fix test.
 class TriplePublishingTest extends FlatSpec with Matchers {
 
   "Adda" should "answer a simple SPARQL query, when the triples were published before" in {
@@ -43,23 +45,28 @@ WHERE {
     val mailKey = "email"
 
     Source(List(triples))
-      .runWith(adda.getPublicationSink[TripleContainer])
+      .runWith(adda.getSink[TripleContainer])
 
-    val queryApp: Flow[GraphSerializable, Unit] = Flow[GraphSerializable]
-      .map { gs =>
-        val results = adda.executeSparqlSelect(query).toList
-        results.size should be(1)
-        val result = results.head
-        result(nameKey) should be(name)
-        result(mailKey) should be(mail)
-      }
+    val queryApp: Flow[GraphSerializable, List[String => String]] = Flow[GraphSerializable]
+      .map(_ => adda.executeSparqlSelect(query).toList)
 
-    val resultFuture = adda.subscribeToSource[TripleContainer]
+    val bindingsListFuture: Future[List[String => String]] = adda.getSource[TripleContainer]
       .via(queryApp)
-      .runWith(Sink.ignore)
+      .runFold(List.empty[String => String]) { case (aggr, next) => aggr ::: next }
 
-    // TODO: Find a better way to await for Adda to settle down.
-    Thread.sleep(1000)
+    Thread.sleep(100)
+    adda.shutdown
+
+    val bindingsList = Await.result(bindingsListFuture, 5.seconds)
+
+    bindingsList.size should be(1)
+    val bindings = bindingsList.head
+
+    val resultName = bindings(nameKey)
+    val resultMail = bindings(mailKey)
+    resultName should be(name)
+    resultMail should be(mail)
+
   }
 
 }
