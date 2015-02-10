@@ -1,36 +1,40 @@
 package com.adda.pubsub
 
-import scala.collection.mutable.Queue
-import scala.reflect.ClassTag
+import akka.actor.{Actor, ActorLogging, ActorRef, Props, actorRef2Scala}
+import akka.stream.actor.ActorPublisherMessage.{Cancel, Request}
+import akka.stream.actor.ActorSubscriberMessage.{OnComplete, OnError, OnNext}
+import akka.stream.actor.{ActorPublisher, ActorSubscriber, WatermarkRequestStrategy}
+import akka.util.Timeout
 
-import akka.actor.Actor
-import akka.actor.ActorLogging
-import akka.actor.ActorRef
-import akka.actor.Props
-import akka.actor.actorRef2Scala
-import akka.stream.actor.ActorPublisher
-import akka.stream.actor.ActorPublisherMessage.Cancel
-import akka.stream.actor.ActorPublisherMessage.Request
-import akka.stream.actor.ActorSubscriber
-import akka.stream.actor.ActorSubscriberMessage.OnComplete
-import akka.stream.actor.ActorSubscriberMessage.OnError
-import akka.stream.actor.ActorSubscriberMessage.OnNext
-import akka.stream.actor.WatermarkRequestStrategy
+import scala.collection.mutable
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
+import scala.reflect.ClassTag
 
 case class AddaEntity[C: ClassTag](entity: C)
 
 case class CreatePublisher[C: ClassTag]() {
   val props = Props(new SourceActor[C]())
+  val name = ???
 }
 
 class BroadcastActor extends Actor with ActorLogging {
+  implicit val timeout = Timeout(10 seconds)
 
   def receive = {
-    case c @ CreatePublisher() =>
-      val publisherActor = context.actorOf(c.props)
+    case c@CreatePublisher() =>
+      //TODO: Get a naming convention here
+      val publisherActor = context.actorOf(c.props, "")
       sender ! publisherActor
-    case a @ AddaEntity(e) =>
+    case a @ AddaEntity(e) => {
+      try {
+        Await.result(context.actorSelection(e.getClass.toString).resolveOne, timeout.duration)
+      } catch {
+        case ex: akka.actor.ActorNotFound => //context.actorOf(Props(new SourceActor[e.type]), e.getClass.toString)
+        case _ =>
+      }
       context.children.foreach(_ ! a)
+    }
     case other =>
       log.error(s"[BroadcastActor] received unhandled message $other.")
   }
@@ -41,7 +45,7 @@ class SourceActor[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
 
   val publishedClass: Class[C] = implicitly[ClassTag[C]].runtimeClass.asInstanceOf[Class[C]]
 
-  val queue = Queue.empty[C]
+  val queue = mutable.Queue.empty[C]
 
   def receive = {
     case a @ AddaEntity(e) =>
