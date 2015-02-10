@@ -21,4 +21,18 @@ class AddaTest extends FlatSpec {
     assert(sink.isInstanceOf[Sink[String]])
   }
 
+  "Adda" should "be able to run sparql query" in {
+    val adda = new Adda
+    val query =
+      """
+        |SELECT ?sub ?pred ?obj
+        |WHERE
+        |{
+        |?sub ?pred ?obj .
+        |}
+        |LIMIT 1
+      """.stripMargin
+    assert(adda.executeSparqlSelect(query).isInstanceOf[Iterator[String => String]])
+  }
+
 }
