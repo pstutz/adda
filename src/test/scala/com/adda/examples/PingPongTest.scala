@@ -46,7 +46,7 @@ class PingPongTest extends FlatSpec with Matchers {
     Source(List(Ping(0)))
       .runWith(adda.getSink[Ping])
 
-    Thread.sleep(1000)
+    Thread.sleep(2000)
     adda.shutdown()
 
     val maxPong = Await.result(maxPongFuture, 5.seconds)
