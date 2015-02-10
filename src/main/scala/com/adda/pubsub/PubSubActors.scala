@@ -10,6 +10,7 @@ import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
+import scala.language.postfixOps
 
 case class AddaEntity[C: ClassTag](entity: C)
 
