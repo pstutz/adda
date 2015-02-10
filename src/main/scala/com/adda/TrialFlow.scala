@@ -1,5 +1,7 @@
 package com.adda
 
+import akka.http.Http
+import akka.http.model.{Uri, HttpRequest, StatusCodes, HttpResponse}
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Source
