@@ -3,17 +3,16 @@ package com.adda.examples
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import org.scalatest.Finders
+
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
+
 import com.adda.Adda
-import com.adda.interfaces.GraphSerializable
-import com.adda.messages.Triple
+
 import akka.actor.ActorSystem
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Source
-import akka.stream.scaladsl.Sink
 
 case class Ping(counter: Int)
 

@@ -1,7 +1,5 @@
 package com.adda.interfaces
 
-import com.adda.messages.Triple
-
 trait TripleStore extends SparqlSelect {
 
   /**

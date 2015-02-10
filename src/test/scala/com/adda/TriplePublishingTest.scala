@@ -1,17 +1,16 @@
 package com.adda
 
-import scala.concurrent.Await
-import scala.concurrent.duration.DurationInt
-import org.scalatest.Finders
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
+
 import com.adda.interfaces.GraphSerializable
-import com.adda.messages.Triple
+import com.adda.interfaces.Triple
+
 import akka.actor.ActorSystem
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.Source
 
 case class TripleContainer(asGraph: List[Triple]) extends GraphSerializable
 
