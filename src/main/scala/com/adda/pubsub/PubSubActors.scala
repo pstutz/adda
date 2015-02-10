@@ -18,13 +18,13 @@ import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.Cancel
 import akka.stream.actor.ActorPublisherMessage.Request
 import akka.stream.actor.ActorSubscriber
-import akka.stream.actor.ActorSubscriberMessage.OnComplete
-import akka.stream.actor.ActorSubscriberMessage.OnError
-import akka.stream.actor.ActorSubscriberMessage.OnNext
+import akka.stream.actor.ActorSubscriberMessage.{OnComplete, OnError, OnNext}
 import akka.stream.actor.WatermarkRequestStrategy
 import akka.util.Timeout
 
 case class AddaEntity[C: ClassTag](entity: C)
+
+case object CompleteAllPublishers
 
 case class CreatePublisher[C: ClassTag]() {
   val props = Props(new SourceActor[C]())
@@ -60,6 +60,7 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
       }
       context.children.foreach(_ ! a)
     }
+    case CompleteAllPublishers => context.children.foreach(_ ! OnComplete)
     case other =>
       log.error(s"[BroadcastActor] received unhandled message $other.")
   }

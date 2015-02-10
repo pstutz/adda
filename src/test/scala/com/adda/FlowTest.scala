@@ -35,6 +35,8 @@ object FlowTest extends App {
     .via(stringHandlingApp)
     .runWith(adda.getPublicationSink[Int])
 
+  adda.shutdown()
+
 }
 
 // TODO: Turn into ScalaTest.

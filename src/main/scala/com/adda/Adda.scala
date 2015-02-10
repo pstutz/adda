@@ -1,5 +1,8 @@
 package com.adda
 
+import akka.stream.actor.ActorPublisherMessage.Cancel
+import akka.stream.actor.ActorSubscriberMessage.OnComplete
+
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
@@ -11,13 +14,9 @@ import com.adda.adapters.SesameAdapter
 import com.adda.interfaces.PubSub
 import com.adda.interfaces.SparqlSelect
 import com.adda.interfaces.TripleStore
-import com.adda.pubsub.BroadcastActor
-import com.adda.pubsub.CreatePublisher
-import com.adda.pubsub.SinkActor
+import com.adda.pubsub.{CompleteAllPublishers, BroadcastActor, CreatePublisher, SinkActor}
 
-import akka.actor.ActorRef
-import akka.actor.ActorSystem
-import akka.actor.Props
+import akka.actor.{Kill, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.stream.ActorFlowMaterializer
 import akka.stream.actor.ActorPublisher
@@ -76,7 +75,8 @@ class Adda extends PubSub with SparqlSelect {
    * Shutdown closes all stream sources.
    */
   def shutdown() {
-    ???
+    broadcastActor ! CompleteAllPublishers
+    system.shutdown()
   }
 
   private[this] def getPublisher[C: ClassTag]: Publisher[C] = {
