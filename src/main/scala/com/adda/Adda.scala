@@ -37,7 +37,7 @@ class Adda extends PubSub with SparqlSelect {
   private[this] val store: TripleStore = new SesameAdapter
   implicit val system: ActorSystem = ActorSystem("Adda")
   private[this] implicit val materializer = ActorFlowMaterializer()
-  private[this] val broadcastActor = system.actorOf(Props(new BroadcastActor()))
+  val broadcastActor = system.actorOf(Props(new BroadcastActor()))
 
   /**
    * Executes SPARQL select query `query'.
