@@ -14,7 +14,6 @@ import akka.actor.Actor
 import akka.actor.ActorLogging
 import akka.actor.Props
 import akka.actor.actorRef2Scala
-import akka.stream.actor.ActorSubscriberMessage.OnComplete
 import akka.util.Timeout
 
 final case object CompleteAllPublishers
@@ -29,9 +28,7 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
 
   def receive = {
     case c @ CreatePublisher() =>
-      val publisherName = c.className
-      val publisherActor = context.child(publisherName).
-        getOrElse(context.actorOf(c.props, publisherName))
+      val publisherActor = context.actorOf(c.props)
       sender ! publisherActor
     case a @ AddaEntity(e) =>
       e match {
@@ -42,7 +39,8 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
         case other => // Do nothing.
       }
       context.children.foreach(_ ! a)
-    case CompleteAllPublishers => context.children.foreach(_ ! Cancel)
+    case CompleteAllPublishers =>
+      context.children.map(_ ! Complete)
     case other =>
       log.error(s"[BroadcastActor] received unhandled message $other.")
   }
