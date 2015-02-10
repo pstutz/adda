@@ -26,6 +26,12 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 
+/**
+ * Adda implements simple publish/subscribe for objects sent via Akka Streams.
+ * It also exposes a SPARQL API for a triple store.
+ * 
+ * TODO: Store published GraphSerializable objects in the triple store.
+ */
 class Adda extends PubSub with SparqlSelect {
 
   private[this] val store: TripleStore = new SesameAdapter
