@@ -29,20 +29,11 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
 
   def receive = {
     case c @ CreatePublisher() =>
-      val publisherActor = context.actorOf(c.props, c.className)
+      val publisherName = c.className
+      val publisherActor = context.child(publisherName).
+        getOrElse(context.actorOf(c.props, publisherName))
       sender ! publisherActor
-    case a @ AddaEntity(e) => {
-      try {
-        Await.result(context.actorSelection(e.getClass.getName).resolveOne, timeout.duration)
-      } catch {
-        case ex: akka.actor.ActorNotFound => {
-          val clazz = e.getClass
-          val props = Props(new SourceActor[ClassTag[clazz.type]]())
-          context.actorOf(props, clazz.getName)
-        }
-        //TODO: Check for other non-fatal exceptions
-      }
-
+    case a @ AddaEntity(e) =>
       e match {
         // If the entity is graph serializable, add it to the store.
         case g: GraphSerializable =>
@@ -51,7 +42,6 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
         case other => // Do nothing.
       }
       context.children.foreach(_ ! a)
-    }
     case CompleteAllPublishers => context.children.foreach(_ ! Cancel)
     case other =>
       log.error(s"[BroadcastActor] received unhandled message $other.")
