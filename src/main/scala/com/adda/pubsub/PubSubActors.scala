@@ -43,6 +43,7 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
         case g: GraphSerializable =>
           val triples = g.asGraph
           triples.foreach(store.addTriple(_))
+        case other =>
       }
       context.children.foreach(_ ! a)
     case other =>
