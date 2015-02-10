@@ -1,16 +1,17 @@
 package com.adda
 
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
+import org.scalatest.Finders
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-
 import com.adda.interfaces.GraphSerializable
 import com.adda.messages.Triple
-
 import akka.actor.ActorSystem
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.Sink
 
 case class TripleContainer(asGraph: List[Triple]) extends GraphSerializable
 
@@ -39,24 +40,27 @@ WHERE {
     implicit val system = ActorSystem("Test")
     implicit val materializer = ActorFlowMaterializer()
 
-    val queryApp = Flow[GraphSerializable]
-      .map { gs =>
-        println("MOOOO!")
-        val results = adda.executeSparqlSelect(query).toList
-        results.size should be(1)
-        val result = results.head
-        result("name") should be("Sa")
-        result("email") should be(mail)
-        ()
-      }
-
-    adda.subscribeToSource[TripleContainer]
-      .via(queryApp)
-      .runWith(Sink.ignore)
+    val nameKey = "name"
+    val mailKey = "email"
 
     Source(List(triples))
       .runWith(adda.getPublicationSink[TripleContainer])
 
+    val queryApp: Flow[GraphSerializable, Unit] = Flow[GraphSerializable]
+      .map { gs =>
+        val results = adda.executeSparqlSelect(query).toList
+        results.size should be(1)
+        val result = results.head
+        result(nameKey) should be(name)
+        result(mailKey) should be(mail)
+      }
+
+    val resultFuture = adda.subscribeToSource[TripleContainer]
+      .via(queryApp)
+      .runWith(Sink.ignore)
+
+    // TODO: Find a better way to await for Adda to settle down.
+    Thread.sleep(1000)
   }
 
 }

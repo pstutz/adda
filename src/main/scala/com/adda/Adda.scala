@@ -71,6 +71,14 @@ class Adda extends PubSub with SparqlSelect {
     sink
   }
 
+  /**
+   * Blocking call that returns once the pub/sub infrastructure has shut down.
+   * Shutdown closes all stream sources.
+   */
+  def shutdown() {
+    ???
+  }
+
   private[this] def getPublisher[C: ClassTag]: Publisher[C] = {
     import system.dispatcher
     implicit val timeout = Timeout(5.seconds)
