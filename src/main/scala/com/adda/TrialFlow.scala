@@ -58,6 +58,7 @@ object TrialFlowWithHttp extends App {
           HttpResponse(entity = "pricing for claim line done",status = StatusCodes.OK)
         }
     }
+  }
 
 
     val listHandlingApp: Flow[List[String], String] = Flow[List[String]].
