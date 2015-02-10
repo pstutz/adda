@@ -1,6 +1,7 @@
 package com.adda.pubsub
 
 import scala.collection.mutable
+import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import scala.reflect.ClassTag
@@ -27,6 +28,7 @@ case class AddaEntity[C: ClassTag](entity: C)
 
 case class CreatePublisher[C: ClassTag]() {
   val props = Props(new SourceActor[C]())
+  val name = implicitly[ClassTag[C]].runtimeClass.getName
 }
 
 class BroadcastActor(private[this] val store: TripleStore) extends Actor with ActorLogging {
@@ -35,9 +37,16 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
   def receive = {
     case c @ CreatePublisher() =>
       //TODO: Get a naming convention here
-      val publisherActor = context.actorOf(c.props)
+      val publisherActor = context.actorOf(c.props, c.name)
       sender ! publisherActor
-    case a @ AddaEntity(e) =>
+    case a @ AddaEntity(e) => {
+      try {
+        Await.result(context.actorSelection(e.getClass.toString).resolveOne, timeout.duration)
+      } catch {
+        case ex: akka.actor.ActorNotFound =>
+          //context.actorOf(Props(new SourceActor[e]), e.getClass.toString)
+        case x: Throwable => throw new Exception(x.getMessage)
+      }
       e match {
         // If the entity is graph serializable, add it to the store.
         case g: GraphSerializable =>
@@ -46,6 +55,7 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
         case other => // Do nothing.
       }
       context.children.foreach(_ ! a)
+    }
     case other =>
       log.error(s"[BroadcastActor] received unhandled message $other.")
   }
