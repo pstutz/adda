@@ -43,7 +43,7 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
         case g: GraphSerializable =>
           val triples = g.asGraph
           triples.foreach(store.addTriple(_))
-        case other =>
+        case other => // Do nothing.
       }
       context.children.foreach(_ ! a)
     case other =>
@@ -64,7 +64,7 @@ class SourceActor[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
         case successfulMatch: C =>
           queue += successfulMatch
           publishNext()
-        case noMatch => // Do nothing.
+        case other => // Do nothing.
       }
     case Request(cnt) =>
       publishNext()
