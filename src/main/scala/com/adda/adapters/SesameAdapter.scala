@@ -3,9 +3,8 @@ package com.adda.adapters
 import org.openrdf.query.QueryLanguage
 import org.openrdf.repository.sail.SailRepository
 import org.openrdf.sail.memory.MemoryStore
-
 import com.adda.interfaces.TripleStore
-import com.adda.messages.Triple
+import com.adda.interfaces.Triple
 
 class SesameAdapter extends TripleStore {
 
