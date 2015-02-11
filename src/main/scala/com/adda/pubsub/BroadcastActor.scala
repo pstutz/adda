@@ -14,6 +14,7 @@ import akka.actor.actorRef2Scala
 import akka.util.Timeout
 import akka.actor.ActorRef
 import akka.actor.Terminated
+import akka.event.LoggingReceive
 
 final case class RegisterSink(sinkClassName: String)
 
@@ -26,6 +27,7 @@ final case object Completed
 final case class CreatePublisher[C: ClassTag]() {
   val props = Props(new SourceActor[C]())
   val className = implicitly[ClassTag[C]].runtimeClass.getName
+  override def toString = s"CreatePublisher($className)"
 }
 
 /**
@@ -49,7 +51,7 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
   private[this] var classForSink = Map.empty[ActorRef, String]
   private[this] var awaitingIdle: List[ActorRef] = Nil
 
-  def receive = {
+  def receive = LoggingReceive {
     case c @ CreatePublisher() =>
       val source = context.actorOf(c.props)
       context.watch(source)

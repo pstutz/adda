@@ -8,6 +8,7 @@ import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.Cancel
 import akka.stream.actor.ActorPublisherMessage.Request
 import akka.actor.UnhandledMessage
+import akka.event.LoggingReceive
 
 final case object Complete
 
@@ -15,7 +16,7 @@ class SourceActor[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
 
   private[this] val queue = mutable.Queue.empty[C]
 
-  def receive = {
+  def receive = LoggingReceive {
     case a @ AddaEntity(e) =>
       e match {
         case successfulMatch: C =>
