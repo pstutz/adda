@@ -27,7 +27,6 @@ final case object Completed
 final case class CreatePublisher[C: ClassTag]() {
   val props = Props(new SourceActor[C]())
   val className = implicitly[ClassTag[C]].runtimeClass.getName
-  override def toString = s"CreatePublisher($className)"
 }
 
 /**
