@@ -31,8 +31,8 @@ import akka.util.Timeout
  * Adda implements simple publish/subscribe for objects sent via Akka Streams.
  * It also exposes a SPARQL API for a triple store.
  *
- * When a GraphSerializable object is published to Adda, then the triples of that entity are
- * published to the triple store before the entity is published to any of the Adda subscribers.
+ * When a GraphSerializable object is published to Adda, then the triples of that object are
+ * published to the triple store before the object is published to any of the Adda subscribers.
  *
  * Adda automatically completes all sources for a class, when the number of active sinks
  * for this class was > 0, and then falls back to 0.
@@ -72,6 +72,9 @@ class Adda extends PubSub with SparqlSelect {
   /**
    * Returns an Akka Streams sink that allows to publish objects of class `C'.
    * Only allows to publish exact instances of `C' and no subclasses.
+   *
+   * When a GraphSerializable object is streamed into this sink, then the triples of that object are
+   * published to the triple store before the object is published to any of the subscribers.
    */
   def getSink[C: ClassTag]: Sink[C] = {
     val subscriber = getSubscriber[C]
