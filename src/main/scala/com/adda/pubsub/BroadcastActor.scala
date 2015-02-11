@@ -99,6 +99,7 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
       if (isCompleted) notifyCompleted()
     case AwaitCompleted =>
       awaitingIdle = sender :: awaitingIdle
+      if (isCompleted) notifyCompleted()
   }
 
   /**
