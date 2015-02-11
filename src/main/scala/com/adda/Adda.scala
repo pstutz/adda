@@ -45,10 +45,8 @@ class Adda extends PubSub with SparqlSelect {
   private[this] val store: TripleStore = new SesameAdapter
   private[this] implicit val system: ActorSystem = ActorSystem("Adda")
   private[this] implicit val materializer = ActorFlowMaterializer()
-  private[this] val broadcastActor = system.actorOf(Props(new BroadcastActor(store)))
+  private[this] val broadcastActor = system.actorOf(Props(new BroadcastActor(store)), "broadcast")
   import system.dispatcher
-
-  private[this] var subscribers: List[Subscriber[_]] = Nil
 
   /**
    * Executes SPARQL select query `query'.
@@ -77,7 +75,6 @@ class Adda extends PubSub with SparqlSelect {
    */
   def getSink[C: ClassTag]: Sink[C] = {
     val subscriber = getSubscriber[C]
-    subscribers = subscriber :: subscribers
     val sink = Sink(subscriber)
     sink
   }
@@ -90,7 +87,6 @@ class Adda extends PubSub with SparqlSelect {
    * for this class was > 0, and then falls back to 0.
    */
   def awaitCompleted()(implicit timeout: Timeout = Timeout(60.seconds)) {
-    subscribers.foreach(_.onComplete())
     val completedFuture = broadcastActor ? AwaitCompleted
     Await.result(completedFuture, timeout.duration)
   }
