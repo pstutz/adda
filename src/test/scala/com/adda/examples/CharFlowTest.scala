@@ -2,7 +2,8 @@ package com.adda.examples
 
 import akka.actor.ActorSystem
 import akka.stream.ActorFlowMaterializer
-import akka.stream.scaladsl.{ForeachSink, Flow, Source}
+import akka.stream.scaladsl.{Sink, ForeachSink, Flow, Source}
+import akka.streams.testkit.StreamTestKit
 import com.adda.Adda
 import org.scalatest.{FlatSpec, Matchers}
 import scala.concurrent.Await
@@ -23,26 +24,19 @@ class CharFlowTest extends FlatSpec with Matchers {
       f.toUpper
     })
 
-   val pub = adda.getSource[Char]
-    
-    Source(List('a','d','d','a')).runWith(adda.getSink[Char])
+    val pub = adda.getSource[Char]
 
-   val futureString =  pub.via(lowerCaseToUpperFlow).runFold(""){(x,y) => x+y}
-    
-   val futureStringWithoutAdda = Source(List('a','d','d','a')).via(lowerCaseToUpperFlow).runFold(""){(x,y) => x+y}
+    Source(List('a','d','d','a'))
+      .runWith(adda.getSink[Char])
 
-    val finalStringValue = Await.result(futureStringWithoutAdda, 5.seconds)
+    val probe = StreamTestKit.SubscriberProbe[Char]
+    pub.via(lowerCaseToUpperFlow).to(Sink(probe)).run()
+    probe.expectSubscription().request(4)
+    probe.expectNext('A')
+    probe.expectNext('D')
+    probe.expectNext('D')
+    probe.expectNext('A')
 
-    Thread.sleep(5000)
-
-    finalStringValue should be ("ADDA")
-
-    shutdown()
-
-    def shutdown() {
-      adda.shutdown()
-      system.shutdown()
-    }
 
   }
 }
