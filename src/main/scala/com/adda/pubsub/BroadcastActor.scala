@@ -30,11 +30,11 @@ final case class CreatePublisher[C: ClassTag]() {
 }
 
 /**
- * Broadcast actor maintains three maps:
+ * Broadcast actor maintains four maps:
  * The input map keeps track of all sinks that receive instances of a given class.
  * The output map keeps track of all sources that publish instances of a given class.
- * The source to class map keeps track of which publisher is responsible for which class,
- * it is only used to associate the `Terminated' message with the right class name for the actor.
+ * The source to class and sink to class maps keep track of which sink/source actors
+ * are handling which classes.
  *
  * Once the number of non-completed sinks for a class was > 0, and then falls back to 0, all
  * sources connected with that class are completed.
