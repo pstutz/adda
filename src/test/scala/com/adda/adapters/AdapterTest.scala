@@ -28,7 +28,7 @@ WHERE {
 
     val tripleStore: TripleStore = new SesameAdapter
     try {
-      tripleStore.addTriple(s"$acme#Sam", s"$foaf/name", name)
+      tripleStore.addTriple(Triple(s"$acme#Sam", s"$foaf/name", name))
       tripleStore.addTriples(List(
         Triple(s"$acme#Sam", s"$foaf/mbox", mail),
         Triple(s"$acme#Sam", s"$acme#somePredicate", s"$acme/someUrl")).iterator)
