@@ -28,8 +28,10 @@ class CharFlowTest extends FlatSpec with Matchers {
     Source(List('a','d','d','a')).runWith(adda.getSink[Char])
 
    val futureString =  pub.via(lowerCaseToUpperFlow).runFold(""){(x,y) => x+y}
+    
+   val futureStringWithoutAdda = Source(List('a','d','d','a')).via(lowerCaseToUpperFlow).runFold(""){(x,y) => x+y}
 
-    val finalStringValue = Await.result(futureString, 5.seconds)
+    val finalStringValue = Await.result(futureStringWithoutAdda, 5.seconds)
 
     Thread.sleep(5000)
 
