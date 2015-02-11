@@ -35,6 +35,7 @@ object FlowTest extends App {
     .via(stringHandlingApp)
     .runWith(adda.getSink[Int])
 
+  Thread.sleep(2000)
   shutdown()
 
   def shutdown() {
