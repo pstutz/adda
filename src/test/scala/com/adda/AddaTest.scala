@@ -62,10 +62,14 @@ class AddaTest extends AkkaSpec {
       try {
         val probe = StreamTestKit.SubscriberProbe[Int]
         adda.getSource[Int].to(Sink(probe)).run
-        Source(List(1, 1)).to(adda.getSink[Int]).run
-        Source(List(1)).to(adda.getSink[Int]).run
+        val s1 = Source(List(1, 1)).to(adda.getSink[Int])
+        val s2 = Source(List(1, 1)).to(adda.getSink[Int])
+        // Only execute once both flows are connected.
+        s1.run
+        s2.run
 
         probe.expectSubscription().request(10)
+        probe.expectNext(1)
         probe.expectNext(1)
         probe.expectNext(1)
         probe.expectNext(1)
@@ -84,15 +88,22 @@ class AddaTest extends AkkaSpec {
         val probe2 = StreamTestKit.SubscriberProbe[Int]
         adda.getSource[Int].to(Sink(probe1)).run
         adda.getSource[Int].to(Sink(probe2)).run
-        Source(List(1)).to(adda.getSink[Int]).run
-        Source(List(1)).to(adda.getSink[Int]).run
+        val s1 = Source(List(1, 1)).to(adda.getSink[Int])
+        val s2 = Source(List(1, 1)).to(adda.getSink[Int])
+        // Only execute once both flows are connected.
+        s1.run
+        s2.run
 
         probe1.expectSubscription().request(10)
+        probe1.expectNext(1)
+        probe1.expectNext(1)
         probe1.expectNext(1)
         probe1.expectNext(1)
         probe1.expectComplete
 
         probe2.expectSubscription().request(10)
+        probe2.expectNext(1)
+        probe2.expectNext(1)
         probe2.expectNext(1)
         probe2.expectNext(1)
         probe2.expectComplete
