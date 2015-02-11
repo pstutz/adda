@@ -12,13 +12,15 @@ libraryDependencies ++= Seq(
   "org.openrdf.sesame" % "sesame-repository-sail" % "2.8.0" % "compile",
   "org.openrdf.sesame" % "sesame-sail-memory" % "2.8.0" % "compile", 
   "org.slf4j" % "slf4j-nop" % "1.7.6" % "compile",
+  "iht" %% "akka-streams-testkit" % "1.0.0-SNAPSHOT" % "test",
   "org.scalatest" %% "scalatest" % "2.2.3" % "test"
 )
 
 scalacOptions ++= Seq("-feature") // Show feature warnings.
 
 resolvers ++= Seq(
-  "Ifi Public" at "https://maven.ifi.uzh.ch/maven2/content/groups/public/"
+  "Ifi Public" at "https://maven.ifi.uzh.ch/maven2/content/groups/public/",
+  "Artifactory Realm" at System.getenv("ARTIFACTORY_URL") + "/libs-snapshots-local/"
 )
 
 // Adds the resource folders to Eclipse projects.
