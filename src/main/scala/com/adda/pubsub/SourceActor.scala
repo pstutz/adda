@@ -23,7 +23,6 @@ class SourceActor[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
         case successfulMatch: C =>
           queue += successfulMatch
           publishNext()
-        case other => // Do nothing.
       }
     case Request(cnt) =>
       publishNext()
