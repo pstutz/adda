@@ -11,15 +11,21 @@ import akka.stream.actor.ActorSubscriberMessage.OnError
 import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.stream.actor.WatermarkRequestStrategy
 
-class SinkActor(private[this] val broadcastActor: ActorRef) extends ActorSubscriber with ActorLogging {
+class SinkActor(
+  private[this] val broadcastActor: ActorRef,
+  sinkClassName: String) extends ActorSubscriber with ActorLogging {
 
   val requestStrategy = WatermarkRequestStrategy(50)
 
+  override def preStart(): Unit = {
+    broadcastActor ! RegisterSink(sinkClassName)
+  }
+
   def receive = {
     case OnNext(next: AnyRef) =>
-      log.debug(s"[SinkActor] received new message $next.")
       broadcastActor ! AddaEntity(next)
     case OnComplete =>
+      broadcastActor ! RemoveSink(sinkClassName)
       context.stop(self)
   }
 }
