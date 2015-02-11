@@ -39,6 +39,7 @@ object FlowTest extends App {
   shutdown()
 
   def shutdown() {
+    adda.awaitCompleted()
     adda.shutdown()
     system.shutdown()
   }
@@ -58,7 +59,6 @@ object FlowTestWithBcast extends App {
     }
 
   val listHandlingAppToInt: Flow[List[String], Int] = Flow[List[String]].map(f => 1)
-
 
   val materializedFlow = FlowGraph { implicit builder =>
     import akka.stream.scaladsl.FlowGraphImplicits._

@@ -8,14 +8,16 @@ import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.Cancel
 import akka.stream.actor.ActorPublisherMessage.Request
 import akka.actor.UnhandledMessage
+import akka.event.LoggingReceive
 
 final case object Complete
 
 class SourceActor[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
 
   private[this] val queue = mutable.Queue.empty[C]
+  private[this] var completeReceived = false
 
-  def receive = {
+  def receive = LoggingReceive {
     case a @ AddaEntity(e) =>
       e match {
         case successfulMatch: C =>
@@ -26,8 +28,8 @@ class SourceActor[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
     case Request(cnt) =>
       publishNext()
     case Complete =>
-      onComplete()
-      context.stop(self)
+      completeReceived = true
+      publishNext()
     case Cancel =>
       context.stop(self)
   }
@@ -36,6 +38,10 @@ class SourceActor[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
     while (!queue.isEmpty && isActive && totalDemand > 0) {
       val next = queue.dequeue
       onNext(next)
+    }
+    if (queue.isEmpty && completeReceived) {
+      onComplete()
+      context.stop(self)
     }
   }
 

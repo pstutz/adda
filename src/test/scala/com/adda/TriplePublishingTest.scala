@@ -44,20 +44,20 @@ WHERE {
     val nameKey = "name"
     val mailKey = "email"
 
-    Source(List(triples))
-      .runWith(adda.getSink[TripleContainer])
-
-    val queryApp: Flow[GraphSerializable, List[String => String]] = Flow[GraphSerializable]
+    val queryApp: Flow[TripleContainer, List[String => String]] = Flow[TripleContainer]
       .map(_ => adda.executeSparqlSelect(query).toList)
 
     val bindingsListFuture: Future[List[String => String]] = adda.getSource[TripleContainer]
       .via(queryApp)
       .runFold(List.empty[String => String]) { case (aggr, next) => aggr ::: next }
 
-    Thread.sleep(10000)
-    adda.shutdown
+    Source(List(triples))
+      .runWith(adda.getSink[TripleContainer])
 
-    val bindingsList = Await.result(bindingsListFuture, 10.seconds)
+    adda.awaitCompleted()
+    adda.shutdown()
+
+    val bindingsList = Await.result(bindingsListFuture, 60.seconds)
 
     bindingsList.size should be(1)
     val bindings = bindingsList.head
