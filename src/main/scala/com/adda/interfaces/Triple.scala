@@ -1,4 +1,4 @@
-package com.adda.messages
+package com.adda.interfaces
 
 //TODO: Move to stream store.
 /**

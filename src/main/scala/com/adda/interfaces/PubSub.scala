@@ -1,0 +1,36 @@
+package com.adda.interfaces
+
+import scala.concurrent.duration.DurationInt
+import scala.reflect.ClassTag
+
+import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.Source
+import akka.util.Timeout
+
+trait PubSub {
+
+  /**
+   * Returns an Akka Streams source that is subscribed to all published objects of class `C'.
+   */
+  def getSource[C: ClassTag]: Source[C]
+
+  /**
+   * Returns an Akka Streams sink that allows to publish objects of class `C'.
+   */
+  def getSink[C: ClassTag]: Sink[C]
+
+  /**
+   * Blocking call that returns once all the incoming sinks have completed and all the sources
+   * have published the remaining items.
+   *
+   * Adda automatically completes all sources for a class, when the number of active sinks
+   * for this class was > 0, and then falls back to 0.
+   */
+  def awaitCompleted()(implicit timeout: Timeout = Timeout(60.seconds))
+
+  /**
+   * Blocking call that shuts down the pub/sub infrastructure and returns when the shutdown is completed.
+   */
+  def shutdown()
+
+}
