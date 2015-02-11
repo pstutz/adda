@@ -36,6 +36,10 @@ class CharFlowTest extends FlatSpec with Matchers {
     probe.expectNext('D')
     probe.expectNext('D')
     probe.expectNext('A')
+    
+    adda.shutdown()
+    
+    probe.expectComplete()
 
 
   }
