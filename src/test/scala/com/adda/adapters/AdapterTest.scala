@@ -25,13 +25,14 @@ WHERE {
     ?person acme:somePredicate ?url .
 }
 """
+    val samIri = s"$acme#Sam"
 
     val tripleStore: TripleStore = new SesameAdapter
     try {
       tripleStore.addTriple(Triple(s"$acme#Sam", s"$foaf/name", name))
       tripleStore.addTriples(List(
-        Triple(s"$acme#Sam", s"$foaf/mbox", mail),
-        Triple(s"$acme#Sam", s"$acme#somePredicate", s"$acme/someUrl")).iterator)
+        Triple(samIri, s"$foaf/mbox", mail),
+        Triple(samIri, s"$acme#somePredicate", url)).iterator)
       val results = tripleStore.executeSparqlSelect(query).toList
       results.size should be(1)
       val result = results.head
