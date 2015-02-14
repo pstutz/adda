@@ -38,7 +38,7 @@
 		<dependency>
 			<groupId>iht</groupId>
 			<artifactId>akka-streams-testkit_${scala.minor.version}</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>1.0.0-SNAPSHOT</version> <!-- TODO Migrate to higher dependencyManagement eventually -->
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
