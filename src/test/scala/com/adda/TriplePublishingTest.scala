@@ -32,10 +32,11 @@ WHERE {
     val foaf = "http://xmlns.com/foaf/0.1"
     val name = "Sam"
     val mail = "sam@acme.com"
+    val samIri = s"$acme#Sam"
 
     val triples = TripleContainer(List(
-      Triple(s"$acme#Sam", s"$foaf/name", name),
-      Triple(s"$acme#Sam", s"$foaf/mbox", mail)))
+      Triple(samIri, s"$foaf/name", name),
+      Triple(samIri, s"$foaf/mbox", mail)))
 
     val adda = new Adda
     implicit val system = ActorSystem("Test")
