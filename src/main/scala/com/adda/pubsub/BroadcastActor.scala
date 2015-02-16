@@ -114,6 +114,7 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
 
   private[this] def notifyCompleted() {
     awaitingIdle.foreach(_ ! Completed)
+    awaitingIdle = Nil
   }
 
 }
