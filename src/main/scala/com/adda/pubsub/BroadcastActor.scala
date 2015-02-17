@@ -29,12 +29,6 @@ final case class CreatePublisher[C: ClassTag]() extends Tagged[C] {
 final case class CreateSubscriber[C: ClassTag]() extends Tagged[C]
 
 /**
- * Broadcast actor maintains four maps:
- * The input map keeps track of all sinks that receive instances of a given class.
- * The output map keeps track of all sources that publish instances of a given class.
- * The source to class and sink to class maps keep track of which sink/source actors
- * are handling which classes.
- *
  * Once the number of non-completed sinks for a class was > 0, and then falls back to 0, all
  * sources connected with that class are completed.
  *
@@ -43,28 +37,20 @@ final case class CreateSubscriber[C: ClassTag]() extends Tagged[C]
 class BroadcastActor(private[this] val store: TripleStore) extends Actor with ActorLogging {
   private[this] implicit val timeout = Timeout(20 seconds)
 
-  private[this] var activeSinks = Map.empty[String, Set[ActorRef]].withDefaultValue(Set.empty)
-  private[this] var activeSources = Map.empty[String, Set[ActorRef]].withDefaultValue(Set.empty)
-  private[this] var classForSource = Map.empty[ActorRef, String]
-  private[this] var classForSink = Map.empty[ActorRef, String]
+  private[this] val pubsub = new PubSubManager[ActorRef]
   private[this] var awaitingIdle: List[ActorRef] = Nil
 
   def receive = LoggingReceive {
     case c @ CreatePublisher() =>
       val source = context.actorOf(Props(c.taggedSourceActor))
       context.watch(source)
-      val sourceClassName = c.className
-      val updatedSourcesForClass = activeSources(sourceClassName) + source
-      activeSources += (c.className -> updatedSourcesForClass)
-      classForSource += (source -> sourceClassName)
+      val topic =
+        pubsub.addSubscriber(topic = c.className, source)
       sender ! source
     case c @ CreateSubscriber() =>
       val sink = context.actorOf(Props(new SinkActor(self)))
       context.watch(sink)
-      val sinkClassName = c.className
-      val updatedSinksForClass = activeSinks(sinkClassName) + sink
-      activeSinks += (c.className -> updatedSinksForClass)
-      classForSink += (sink -> sinkClassName)
+      pubsub.addPublisher(c.className, sink)
       sender ! sink
     case a @ AddaEntity(e) =>
       e match {
@@ -74,49 +60,28 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
           triples.foreach(store.addTriple(_))
         case other => // Do nothing.
       }
-      val sink = sender
-      val entityClass = classForSink(sink)
-      val sourcesForClass = activeSources(entityClass)
-      sourcesForClass.foreach(_ ! a)
-    case Terminated(sourceOrSink) =>
-      val isSource = classForSource.contains(sourceOrSink)
-      if (isSource) {
-        val source = sourceOrSink
-        val sourceClassName = classForSource(source)
-        val updatedSourcesForClass = activeSources(sourceClassName) - source
-        if (updatedSourcesForClass.isEmpty) {
-          activeSources -= sourceClassName
-        } else {
-          activeSources += (sourceClassName -> updatedSourcesForClass)
+      val publisher = sender
+      val topic = pubsub.topicForPublisher(publisher)
+      val subscribersForTopic = pubsub.subscribersForTopic(topic)
+      subscribersForTopic.foreach(_ ! a)
+    case Terminated(actor) =>
+      if (pubsub.isPublisher(actor)) {
+        val topic = pubsub.topicForPublisher(actor)
+        pubsub.removePublisher(actor)
+        if (pubsub.publishersForTopic(topic).isEmpty) {
+          completePublishers(topic)
         }
-        classForSource -= source
-      } else {
-        val sink = sourceOrSink
-        val sinkClassName = classForSink(sink)
-        val updatedSinksForClass = activeSinks(sinkClassName) - sender
-        if (updatedSinksForClass.isEmpty) {
-          activeSinks -= sinkClassName
-          completeSources(sinkClassName)
-        } else {
-          activeSinks += (sinkClassName -> updatedSinksForClass)
-        }
-        classForSink -= sink
+      } else { // isSubscriber
+        pubsub.removeSubscriber(actor)
       }
-      if (isCompleted) notifyCompleted()
+      if (pubsub.isCompleted) notifyCompleted()
     case AwaitCompleted =>
       awaitingIdle = sender :: awaitingIdle
-      if (isCompleted) notifyCompleted()
+      if (pubsub.isCompleted) notifyCompleted()
   }
 
-  /**
-   * Returns true if all sinks and sources have been completed.
-   */
-  private[this] def isCompleted = {
-    activeSources.isEmpty && activeSinks.isEmpty
-  }
-
-  private[this] def completeSources(sourceClassName: String) = {
-    activeSources(sourceClassName).foreach(_ ! Complete)
+  private[this] def completePublishers(topic: String) = {
+    pubsub.subscribersForTopic(topic).foreach(_ ! Complete)
   }
 
   private[this] def notifyCompleted() {
