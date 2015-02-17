@@ -11,20 +11,14 @@ import com.adda.adapters.SesameAdapter
 import com.adda.interfaces.PubSub
 import com.adda.interfaces.SparqlSelect
 import com.adda.interfaces.TripleStore
-import com.adda.pubsub.AwaitCompleted
-import com.adda.pubsub.BroadcastActor
-import com.adda.pubsub.CreatePublisher
-import com.adda.pubsub.SinkActor
+import com.adda.pubsub._
 
-import akka.actor.ActorRef
-import akka.actor.ActorSystem
-import akka.actor.Props
+import akka.actor.{Props, ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.stream.ActorFlowMaterializer
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorSubscriber
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.{PropsSource, Sink, Source}
 import akka.util.Timeout
 
 /**
@@ -80,6 +74,13 @@ class Adda extends PubSub with SparqlSelect {
     val subscriber = getSubscriber[C]
     val sink = Sink(subscriber)
     sink
+  }
+
+  /**
+   * Returns an Akka stream that is used as a buffer for incoming http requests of class `C'.
+   */
+  def getHttpSource[C: ClassTag]: PropsSource[C] = {
+    Source[C](Props[SourceActor[C]])
   }
 
   /**
