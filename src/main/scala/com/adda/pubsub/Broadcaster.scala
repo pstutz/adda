@@ -2,17 +2,13 @@ package com.adda.pubsub
 
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
-import scala.reflect.{ ClassTag, _ }
-import com.adda.interfaces.GraphSerializable
-import com.adda.interfaces.TripleStore
-import akka.actor.Actor
-import akka.actor.ActorLogging
-import akka.actor.ActorRef
-import akka.actor.Props
-import akka.actor.actorRef2Scala
+import scala.reflect.ClassTag
+
+import com.adda.interfaces.{GraphSerializable, TripleStore}
+
+import akka.actor.{Actor, ActorLogging, ActorRef, Props, Terminated, actorRef2Scala}
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import akka.actor.Terminated
 
 final case object AwaitCompleted
 
@@ -36,7 +32,7 @@ final case class CreateSubscriber[C: ClassTag]() extends Tagged[C] {
  *
  * The `awaitingIdle' list keeps track of actors that are waiting for all processing to complete.
  */
-class BroadcastActor(private[this] val store: TripleStore) extends Actor with ActorLogging {
+class Broadcaster(private[this] val store: TripleStore) extends Actor with ActorLogging {
   private[this] implicit val timeout = Timeout(20 seconds)
 
   private[this] val pubSub = new PubSubManager

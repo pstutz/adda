@@ -1,7 +1,5 @@
 package com.adda.pubsub
 
-import akka.actor.ActorRef
-
 class MemberManager[M] {
 
   private[this] var activeMembers = Map.empty[String, Set[M]].withDefaultValue(Set.empty)

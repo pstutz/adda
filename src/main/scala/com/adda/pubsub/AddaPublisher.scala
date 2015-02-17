@@ -3,12 +3,11 @@ package com.adda.pubsub
 import scala.collection.mutable
 import scala.language.postfixOps
 import scala.reflect.ClassTag
+
 import akka.actor.ActorLogging
-import akka.stream.actor.ActorPublisher
-import akka.stream.actor.ActorPublisherMessage.Cancel
-import akka.stream.actor.ActorPublisherMessage.Request
-import akka.actor.UnhandledMessage
 import akka.event.LoggingReceive
+import akka.stream.actor.ActorPublisher
+import akka.stream.actor.ActorPublisherMessage.{Cancel, Request}
 
 final case object Complete
 

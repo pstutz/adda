@@ -1,6 +1,6 @@
 package com.adda.pubsub
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, actorRef2Scala}
 
 /**
  * An actor can either be a publisher or a subscriber, never both.

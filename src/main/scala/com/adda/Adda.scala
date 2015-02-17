@@ -4,21 +4,17 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
 
-import org.reactivestreams.Publisher
-import org.reactivestreams.Subscriber
+import org.reactivestreams.{Publisher, Subscriber}
 
 import com.adda.adapters.SesameAdapter
-import com.adda.interfaces.PubSub
-import com.adda.interfaces.SparqlSelect
-import com.adda.interfaces.TripleStore
-import com.adda.pubsub._
+import com.adda.interfaces.{PubSub, SparqlSelect, TripleStore}
+import com.adda.pubsub.{AwaitCompleted, Broadcaster, CreatePublisher, CreateSubscriber}
 
-import akka.actor.{ Props, ActorRef, ActorSystem }
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.stream.ActorFlowMaterializer
-import akka.stream.actor.ActorPublisher
-import akka.stream.actor.ActorSubscriber
-import akka.stream.scaladsl.{ PropsSource, Sink, Source }
+import akka.stream.actor.{ActorPublisher, ActorSubscriber}
+import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
 /**
@@ -39,7 +35,7 @@ class Adda extends PubSub with SparqlSelect {
   private[this] val store: TripleStore = new SesameAdapter
   private[this] implicit val system: ActorSystem = ActorSystem("Adda")
   private[this] implicit val materializer = ActorFlowMaterializer()
-  private[this] val broadcastActor = system.actorOf(Props(new BroadcastActor(store)), "broadcast")
+  private[this] val broadcastActor = system.actorOf(Props(new Broadcaster(store)), "broadcast")
   import system.dispatcher
 
   /**
