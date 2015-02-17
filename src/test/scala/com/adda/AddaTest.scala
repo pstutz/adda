@@ -116,27 +116,6 @@ class AddaTest extends AkkaSpec {
         //adda.shutdown
       }
     }
-    
-    "buffer the incoming http requests and stream to adda" in {
-      val adda = new Adda
-      try {
-        val probe = StreamTestKit.SubscriberProbe[Int]
-        val claimSource = adda.getHttpSource[Int]
-        val materializedMap = claimSource.to(Sink(probe)).run()
-        val ref = materializedMap.get(claimSource)
-        
-        ref ! 1
-        ref ! 2
-        ref ! 3
-        
-        probe.expectSubscription().request(10)
-        probe.expectNext(1)
-        probe.expectNext(2)
-        probe.expectNext(3)
-      } finally {
-        adda.shutdown()
-      }
-    }
 
   }
 
