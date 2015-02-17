@@ -113,7 +113,7 @@ class AddaTest extends AkkaSpec {
 
         adda.awaitCompleted
       } finally {
-        //adda.shutdown
+        adda.shutdown
       }
     }
 
