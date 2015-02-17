@@ -4,8 +4,8 @@ import akka.actor.ActorRef
 
 class PubSubManager[M] {
 
-  val subscribers = new MemberManager[M]
-  val publishers = new MemberManager[M]
+  private[this] val subscribers = new MemberManager[M]
+  private[this] val publishers = new MemberManager[M]
 
   def isCompleted = !subscribers.hasMembers && !publishers.hasMembers
 
