@@ -12,13 +12,13 @@ import akka.event.LoggingReceive
 
 final case object Complete
 
-class SourceActor[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
+class AddaPublisher[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
 
   private[this] val queue = mutable.Queue.empty[C]
   private[this] var completeReceived = false
 
   def receive = LoggingReceive {
-    case a @ AddaEntity(e) =>
+    case p @ ToBroadcast(e) =>
       e match {
         case successfulMatch: C =>
           queue += successfulMatch

@@ -11,14 +11,14 @@ import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.stream.actor.WatermarkRequestStrategy
 import akka.event.LoggingReceive
 
-class SinkActor(
+class AddaSubscriber(
   private[this] val broadcastActor: ActorRef) extends ActorSubscriber with ActorLogging {
 
   val requestStrategy = WatermarkRequestStrategy(50)
 
   def receive = LoggingReceive {
     case OnNext(next: AnyRef) =>
-      broadcastActor ! AddaEntity(next)
+      broadcastActor ! ToBroadcast(next)
     case OnComplete =>
       context.stop(self)
   }
