@@ -4,9 +4,9 @@ import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 
-import com.adda.interfaces.{GraphSerializable, TripleStore}
+import com.adda.interfaces.{ GraphSerializable, TripleStore }
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props, Terminated, actorRef2Scala}
+import akka.actor.{ Actor, ActorLogging, ActorRef, Props, Terminated, actorRef2Scala }
 import akka.event.LoggingReceive
 import akka.util.Timeout
 
@@ -44,9 +44,9 @@ class Broadcaster(private[this] val store: TripleStore) extends Actor with Actor
     case c @ CreateSubscriber() =>
       val subscriber = createSubscriber(c)
       sender ! subscriber
-    case p @ ToBroadcast(e) =>
+    case toBroadcast @ ToBroadcast(e) =>
       serializeToGraph(e)
-      broadcast(p)
+      pubSub.broadcastToPublishers(fromSubscriber = sender, itemToBroadcast = toBroadcast)
     case Terminated(actor) =>
       pubSub.remove(actor)
     case AwaitCompleted =>
@@ -75,12 +75,6 @@ class Broadcaster(private[this] val store: TripleStore) extends Actor with Actor
         triples.foreach(store.addTriple(_))
       case other => // Do nothing.
     }
-  }
-
-  private[this] def broadcast(b: ToBroadcast[_]) {
-    val topic = pubSub.topicForSubscriber(sender)
-    val publishersForTopic = pubSub.publishersForTopic(topic)
-    publishersForTopic.foreach(_ ! b)
   }
 
 }

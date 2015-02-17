@@ -1,9 +1,12 @@
 package com.adda.pubsub
 
-import akka.actor.{ActorRef, actorRef2Scala}
+import akka.actor.{ ActorRef, actorRef2Scala }
 
 /**
  * An actor can either be a publisher or a subscriber, never both.
+ *
+ * Subscribers are the stream sinks, from which the items to publish arrive.
+ * Publishers are the stream sources, which end up publishing the items.
  */
 class PubSubManager {
 
@@ -11,24 +14,17 @@ class PubSubManager {
   private[this] val subscribers = new MemberManager[ActorRef]
   private[this] val publishers = new MemberManager[ActorRef]
 
+  def broadcastToPublishers[C <: AnyRef](fromSubscriber: ActorRef, itemToBroadcast: ToBroadcast[C]) {
+    val topic = subscribers.topicForMember(fromSubscriber)
+    publishersForTopic(topic).foreach(_ ! itemToBroadcast)
+  }
+
   def addSubscriber(topic: String, subscriber: ActorRef) {
     subscribers.addMember(topic, subscriber)
   }
 
   def addPublisher(topic: String, publisher: ActorRef) {
     publishers.addMember(topic, publisher)
-  }
-
-  def subscribersForTopic(topic: String): Set[ActorRef] = {
-    subscribers.membersForTopic(topic)
-  }
-
-  def publishersForTopic(topic: String): Set[ActorRef] = {
-    publishers.membersForTopic(topic)
-  }
-
-  def topicForSubscriber(subscriber: ActorRef): String = {
-    subscribers.topicForMember(subscriber)
   }
 
   /**
@@ -51,12 +47,20 @@ class PubSubManager {
     if (isCompleted) notifyCompleted()
   }
 
+  private[this] def subscribersForTopic(topic: String): Set[ActorRef] = {
+    subscribers.membersForTopic(topic)
+  }
+
+  private[this] def publishersForTopic(topic: String): Set[ActorRef] = {
+    publishers.membersForTopic(topic)
+  }
+
   private[this] def isSubscriber(member: ActorRef): Boolean = {
     subscribers.isMember(member)
   }
 
   private[this] def removeSubscriber(subscriber: ActorRef) {
-    val topic = topicForSubscriber(subscriber)
+    val topic = subscribers.topicForMember(subscriber)
     subscribers.removeMember(subscriber)
     val remainingSubscribers = subscribersForTopic(topic)
     if (remainingSubscribers.isEmpty) {
