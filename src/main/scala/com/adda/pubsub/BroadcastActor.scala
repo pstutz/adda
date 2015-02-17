@@ -69,7 +69,7 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
         val topic = pubsub.topicForPublisher(actor)
         pubsub.removePublisher(actor)
         if (pubsub.publishersForTopic(topic).isEmpty) {
-          completePublishers(topic)
+          completeSubscribers(topic)
         }
       } else { // isSubscriber
         pubsub.removeSubscriber(actor)
@@ -80,7 +80,7 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
       if (pubsub.isCompleted) notifyCompleted()
   }
 
-  private[this] def completePublishers(topic: String) = {
+  private[this] def completeSubscribers(topic: String) = {
     pubsub.subscribersForTopic(topic).foreach(_ ! Complete)
   }
 
