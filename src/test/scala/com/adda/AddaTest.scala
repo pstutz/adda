@@ -114,6 +114,31 @@ class AddaTest extends AkkaSpec {
       }
     }
 
+    "support waiting for completion repeatedly" in {
+      val adda = new Adda
+      try {
+        val probe1 = StreamTestKit.SubscriberProbe[Int]
+        adda.getSource[Int].to(Sink(probe1)).run
+        Source(List(1, 2, 3)).to(adda.getSink[Int]).run
+        probe1.expectSubscription().request(10)
+        probe1.expectNext(1)
+        probe1.expectNext(2)
+        probe1.expectNext(3)
+        probe1.expectComplete
+        adda.awaitCompleted
+        val probe2 = StreamTestKit.SubscriberProbe[Int]
+        adda.getSource[Int].to(Sink(probe2)).run
+        Source(List(1, 2, 3)).to(adda.getSink[Int]).run
+        probe2.expectSubscription().request(10)
+        probe2.expectNext(1)
+        probe2.expectNext(2)
+        probe2.expectNext(3)
+        probe2.expectComplete
+        adda.awaitCompleted
+      } finally {
+        adda.shutdown
+      }
+    }
   }
 
 }
