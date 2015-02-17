@@ -4,14 +4,11 @@ import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.{ ActorFlowMaterializer, ActorFlowMaterializerSettings }
 import akka.streams.testkit.{ StreamTestKit, AkkaSpec }
 
-import scala.concurrent.ExecutionContext
-
 class AddaTest extends AkkaSpec {
   val settings = ActorFlowMaterializerSettings(system)
     .withInputBuffer(initialSize = 2, maxSize = 16)
 
   implicit val materializer = ActorFlowMaterializer(settings)
-  implicit val executionContext = ExecutionContext.Implicits.global
 
   "Adda" must {
     "broadcast from one sink to one source" in {
