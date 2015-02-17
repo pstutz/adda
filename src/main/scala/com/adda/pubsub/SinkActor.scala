@@ -12,20 +12,14 @@ import akka.stream.actor.WatermarkRequestStrategy
 import akka.event.LoggingReceive
 
 class SinkActor(
-  private[this] val broadcastActor: ActorRef,
-  sinkClassName: String) extends ActorSubscriber with ActorLogging {
+  private[this] val broadcastActor: ActorRef) extends ActorSubscriber with ActorLogging {
 
   val requestStrategy = WatermarkRequestStrategy(50)
-
-  override def preStart(): Unit = {
-    broadcastActor ! RegisterSink(sinkClassName)
-  }
 
   def receive = LoggingReceive {
     case OnNext(next: AnyRef) =>
       broadcastActor ! AddaEntity(next)
     case OnComplete =>
-      broadcastActor ! RemoveSink(sinkClassName)
       context.stop(self)
   }
 }

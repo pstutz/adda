@@ -1,33 +1,32 @@
 package com.adda.pubsub
 
-import akka.stream.actor.ActorPublisherMessage.Cancel
-import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
-import scala.reflect.ClassTag
+import scala.reflect.{ ClassTag, _ }
 import com.adda.interfaces.GraphSerializable
 import com.adda.interfaces.TripleStore
 import akka.actor.Actor
 import akka.actor.ActorLogging
+import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
-import akka.util.Timeout
-import akka.actor.ActorRef
-import akka.actor.Terminated
 import akka.event.LoggingReceive
-
-final case class RegisterSink(sinkClassName: String)
-
-final case class RemoveSink(sinkClassName: String)
+import akka.util.Timeout
+import akka.actor.Terminated
 
 final case object AwaitCompleted
 
 final case object Completed
 
-final case class CreatePublisher[C: ClassTag]() {
-  val props = Props(new SourceActor[C]())
+abstract class Tagged[C: ClassTag] {
   val className = implicitly[ClassTag[C]].runtimeClass.getName
 }
+
+final case class CreatePublisher[C: ClassTag]() extends Tagged[C] {
+  def taggedSourceActor = new SourceActor[C]()
+}
+
+final case class CreateSubscriber[C: ClassTag]() extends Tagged[C]
 
 /**
  * Broadcast actor maintains four maps:
@@ -52,13 +51,21 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
 
   def receive = LoggingReceive {
     case c @ CreatePublisher() =>
-      val source = context.actorOf(c.props)
+      val source = context.actorOf(Props(c.taggedSourceActor))
       context.watch(source)
       val sourceClassName = c.className
       val updatedSourcesForClass = activeSources(sourceClassName) + source
       activeSources += (c.className -> updatedSourcesForClass)
       classForSource += (source -> sourceClassName)
       sender ! source
+    case c @ CreateSubscriber() =>
+      val sink = context.actorOf(Props(new SinkActor(self)))
+      context.watch(sink)
+      val sinkClassName = c.className
+      val updatedSinksForClass = activeSinks(sinkClassName) + sink
+      activeSinks += (c.className -> updatedSinksForClass)
+      classForSink += (sink -> sinkClassName)
+      sender ! sink
     case a @ AddaEntity(e) =>
       e match {
         // If the entity is graph serializable, add it to the store.
@@ -71,30 +78,30 @@ class BroadcastActor(private[this] val store: TripleStore) extends Actor with Ac
       val entityClass = classForSink(sink)
       val sourcesForClass = activeSources(entityClass)
       sourcesForClass.foreach(_ ! a)
-    case RegisterSink(sinkClassName) =>
-      val updatedSinksForClass = activeSinks(sinkClassName) + sender
-      activeSinks += (sinkClassName -> updatedSinksForClass)
-      classForSink += (sender -> sinkClassName)
-    case RemoveSink(sinkClassName) =>
-      val sink = sender
-      val updatedSinksForClass = activeSinks(sinkClassName) - sender
-      if (updatedSinksForClass.isEmpty) {
-        activeSinks -= sinkClassName
-        completeSources(sinkClassName)
+    case Terminated(sourceOrSink) =>
+      val isSource = classForSource.contains(sourceOrSink)
+      if (isSource) {
+        val source = sourceOrSink
+        val sourceClassName = classForSource(source)
+        val updatedSourcesForClass = activeSources(sourceClassName) - source
+        if (updatedSourcesForClass.isEmpty) {
+          activeSources -= sourceClassName
+        } else {
+          activeSources += (sourceClassName -> updatedSourcesForClass)
+        }
+        classForSource -= source
       } else {
-        activeSinks += (sinkClassName -> updatedSinksForClass)
+        val sink = sourceOrSink
+        val sinkClassName = classForSink(sink)
+        val updatedSinksForClass = activeSinks(sinkClassName) - sender
+        if (updatedSinksForClass.isEmpty) {
+          activeSinks -= sinkClassName
+          completeSources(sinkClassName)
+        } else {
+          activeSinks += (sinkClassName -> updatedSinksForClass)
+        }
+        classForSink -= sink
       }
-      classForSink -= sink
-      if (isCompleted) notifyCompleted()
-    case Terminated(source) =>
-      val sourceClassName = classForSource(source)
-      val updatedSourcesForClass = activeSources(sourceClassName) - source
-      if (updatedSourcesForClass.isEmpty) {
-        activeSources -= sourceClassName
-      } else {
-        activeSources += (sourceClassName -> updatedSourcesForClass)
-      }
-      classForSource -= source
       if (isCompleted) notifyCompleted()
     case AwaitCompleted =>
       awaitingIdle = sender :: awaitingIdle

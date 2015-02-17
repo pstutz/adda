@@ -13,12 +13,12 @@ import com.adda.interfaces.SparqlSelect
 import com.adda.interfaces.TripleStore
 import com.adda.pubsub._
 
-import akka.actor.{Props, ActorRef, ActorSystem}
+import akka.actor.{ Props, ActorRef, ActorSystem }
 import akka.pattern.ask
 import akka.stream.ActorFlowMaterializer
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorSubscriber
-import akka.stream.scaladsl.{PropsSource, Sink, Source}
+import akka.stream.scaladsl.{ PropsSource, Sink, Source }
 import akka.util.Timeout
 
 /**
@@ -104,10 +104,10 @@ class Adda extends PubSub with SparqlSelect {
   }
 
   private[this] def getSubscriber[C: ClassTag]: Subscriber[C] = {
-    val className = implicitly[ClassTag[C]].runtimeClass.getName
-    val subscriberActor = system.actorOf(Props(new SinkActor(broadcastActor, className)))
-    val subscriber = ActorSubscriber[C](subscriberActor)
-    subscriber
+    implicit val timeout = Timeout(5.seconds)
+    val subscriberActorFuture = broadcastActor ? CreateSubscriber[C]()
+    val subscriberFuture = subscriberActorFuture.map(s => ActorSubscriber[C](s.asInstanceOf[ActorRef]))
+    Await.result(subscriberFuture, 5.seconds)
   }
 
 }
