@@ -80,7 +80,7 @@ class Adda extends PubSub with SparqlSelect {
    * Returns an Akka stream that is used as a buffer for incoming http requests of class `C'.
    */
   def getHttpSource[C: ClassTag]: PropsSource[C] = {
-    Source[C](Props[SourceActor[C]])
+    Source[C](Props(new HttpSourceActor[C]()))
   }
 
   /**
