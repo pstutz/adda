@@ -10,7 +10,7 @@ addSbtPlugin("org.scala-sbt.plugins" % "sbt-onejar" % "0.8")
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.0.1")
 
-addSbtPlugin("com.codacy" % "sbt-codacy-coverage" % "1.0.0")
+addSbtPlugin("com.codacy" % "sbt-codacy-coverage" % "1.0.2")
 
 addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.0.0.BETA1")
 
