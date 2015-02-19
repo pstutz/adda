@@ -4,27 +4,17 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
 
-import org.reactivestreams.Publisher
-import org.reactivestreams.Subscriber
+import org.reactivestreams.{Publisher, Subscriber}
 
 import com.adda.adapters.SesameAdapter
-import com.adda.interfaces.PubSub
-import com.adda.interfaces.SparqlSelect
-import com.adda.interfaces.TripleStore
-import com.adda.pubsub.AwaitCompleted
-import com.adda.pubsub.BroadcastActor
-import com.adda.pubsub.CreatePublisher
-import com.adda.pubsub.SinkActor
+import com.adda.interfaces.{PubSub, SparqlSelect, TripleStore}
+import com.adda.pubsub.{AwaitCompleted, Broadcaster, CreatePublisher, CreateSubscriber}
 
-import akka.actor.ActorRef
-import akka.actor.ActorSystem
-import akka.actor.Props
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.stream.ActorFlowMaterializer
-import akka.stream.actor.ActorPublisher
-import akka.stream.actor.ActorSubscriber
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
+import akka.stream.actor.{ActorPublisher, ActorSubscriber}
+import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
 /**
@@ -45,7 +35,7 @@ class Adda extends PubSub with SparqlSelect {
   private[this] val store: TripleStore = new SesameAdapter
   private[this] implicit val system: ActorSystem = ActorSystem("Adda")
   private[this] implicit val materializer = ActorFlowMaterializer()
-  private[this] val broadcastActor = system.actorOf(Props(new BroadcastActor(store)), "broadcast")
+  private[this] val broadcastActor = system.actorOf(Props(new Broadcaster(store)), "broadcast")
   import system.dispatcher
 
   /**
@@ -110,10 +100,10 @@ class Adda extends PubSub with SparqlSelect {
   }
 
   private[this] def getSubscriber[C: ClassTag]: Subscriber[C] = {
-    val className = implicitly[ClassTag[C]].runtimeClass.getName
-    val subscriberActor = system.actorOf(Props(new SinkActor(broadcastActor, className)))
-    val subscriber = ActorSubscriber[C](subscriberActor)
-    subscriber
+    implicit val timeout = Timeout(5.seconds)
+    val subscriberActorFuture = broadcastActor ? CreateSubscriber[C]()
+    val subscriberFuture = subscriberActorFuture.map(s => ActorSubscriber[C](s.asInstanceOf[ActorRef]))
+    Await.result(subscriberFuture, 5.seconds)
   }
 
 }
