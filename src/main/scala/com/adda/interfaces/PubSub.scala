@@ -26,11 +26,11 @@ trait PubSub {
    * Adda automatically completes all sources for a class, when the number of active sinks
    * for this class was > 0, and then falls back to 0.
    */
-  def awaitCompleted()(implicit timeout: Timeout = Timeout(60.seconds))
+  def awaitCompleted()(implicit timeout: Timeout = Timeout(60.seconds)): Unit
 
   /**
    * Blocking call that shuts down the pub/sub infrastructure and returns when the shutdown is completed.
    */
-  def shutdown()
+  def shutdown(): Unit
 
 }

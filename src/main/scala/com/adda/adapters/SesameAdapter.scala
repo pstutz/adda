@@ -39,7 +39,7 @@ class SesameAdapter extends TripleStore {
   /**
    * Add a triple `t' to the store.
    */
-  def addTriple(t: Triple) {
+  def addTriple(t: Triple): Unit = {
     val c = sesame.getConnection
     addTripleWithConnection(t, c)
     c.close
@@ -49,7 +49,7 @@ class SesameAdapter extends TripleStore {
    * Adds all triples in the iterator. By default delegates to addTriple,
    * but using this call allows the implementation to optimize bulk-loading.
    */
-  override def addTriples(triples: Iterator[Triple]) {
+  override def addTriples(triples: Iterator[Triple]): Unit = {
     val c = sesame.getConnection
     for (t <- triples) {
       addTripleWithConnection(t, c)
@@ -57,7 +57,7 @@ class SesameAdapter extends TripleStore {
     c.close
   }
 
-  private[this] def addTripleWithConnection(t: Triple, c: SailRepositoryConnection) {
+  private[this] def addTripleWithConnection(t: Triple, c: SailRepositoryConnection): Unit = {
     val s = valueFactory.createURI(t.s)
     val p = valueFactory.createURI(t.p)
     if (t.o.startsWith("http://")) {

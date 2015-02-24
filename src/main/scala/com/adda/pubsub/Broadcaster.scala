@@ -23,7 +23,7 @@ final case class CreatePublisher[C: ClassTag]() extends Tagged[C] {
 }
 
 final case class CreateSubscriber[C: ClassTag]() extends Tagged[C] {
-  def createSubscriber(broadcaster: ActorRef) = new AddaSubscriber(broadcaster)
+  def createSubscriber(broadcaster: ActorRef): AddaSubscriber = new AddaSubscriber(broadcaster)
 }
 
 /**
@@ -37,7 +37,7 @@ class Broadcaster(private[this] val store: TripleStore) extends Actor with Actor
 
   private[this] val pubSub = new PubSubManager
 
-  def receive = LoggingReceive {
+  def receive: Actor.Receive = LoggingReceive {
     case c @ CreatePublisher() =>
       val publisher = createPublisher(c)
       sender ! publisher
@@ -67,7 +67,7 @@ class Broadcaster(private[this] val store: TripleStore) extends Actor with Actor
     subscriber
   }
 
-  private[this] def serializeToGraph(e: AnyRef) {
+  private[this] def serializeToGraph(e: AnyRef): Unit = {
     e match {
       // If the entity is graph serializable, add it to the store.
       case g: GraphSerializable =>
