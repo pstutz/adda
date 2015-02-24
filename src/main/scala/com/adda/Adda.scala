@@ -79,7 +79,7 @@ class Adda extends PubSub with SparqlSelect {
    * Adda automatically completes all sources for a class, when the number of active sinks
    * for this class was > 0, and then falls back to 0.
    */
-  def awaitCompleted()(implicit timeout: Timeout = Timeout(60.seconds)) {
+  def awaitCompleted()(implicit timeout: Timeout = Timeout(60.seconds)): Unit = {
     val completedFuture = broadcastActor ? AwaitCompleted
     Await.result(completedFuture, timeout.duration)
   }
@@ -87,7 +87,7 @@ class Adda extends PubSub with SparqlSelect {
   /**
    * Blocking call that shuts down Adda and returns when the shutdown is completed.
    */
-  def shutdown() {
+  def shutdown(): Unit = {
     system.shutdown()
     system.awaitTermination()
   }

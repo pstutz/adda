@@ -23,8 +23,8 @@ class SesameAdapter extends TripleStore {
     val tupleQuery = c.prepareTupleQuery(QueryLanguage.SPARQL, query)
     val customResultIterator = tupleQuery.evaluate
     val standardIterator = new Iterator[String => String] {
-      def hasNext = customResultIterator.hasNext
-      def next = {
+      def hasNext: Boolean = customResultIterator.hasNext
+      def next: String => String = {
         val n = customResultIterator.next
         (variableName: String) => n.getBinding(variableName).getValue.stringValue
       }
@@ -69,7 +69,7 @@ class SesameAdapter extends TripleStore {
     }
   }
 
-  def shutdown() {
+  def shutdown(): Unit = {
     sesame.shutDown()
   }
 

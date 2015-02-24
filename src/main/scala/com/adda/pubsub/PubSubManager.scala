@@ -14,23 +14,23 @@ class PubSubManager {
   private[this] val subscribers = new MemberManager[ActorRef]
   private[this] val publishers = new MemberManager[ActorRef]
 
-  def broadcastToPublishers[C <: AnyRef](fromSubscriber: ActorRef, itemToBroadcast: ToBroadcast[C]) {
+  def broadcastToPublishers[C <: AnyRef](fromSubscriber: ActorRef, itemToBroadcast: ToBroadcast[C]): Unit = {
     val topic = subscribers.topicForMember(fromSubscriber)
     publishersForTopic(topic).foreach(_ ! itemToBroadcast)
   }
 
-  def addSubscriber(topic: String, subscriber: ActorRef) {
+  def addSubscriber(topic: String, subscriber: ActorRef): Unit = {
     subscribers.addMember(topic, subscriber)
   }
 
-  def addPublisher(topic: String, publisher: ActorRef) {
+  def addPublisher(topic: String, publisher: ActorRef): Unit = {
     publishers.addMember(topic, publisher)
   }
 
   /**
    * Has to be either a publisher or a subscriber.
    */
-  def remove(actor: ActorRef) {
+  def remove(actor: ActorRef): Unit = {
     if (isSubscriber(actor)) {
       removeSubscriber(actor)
     } else if (isPublisher(actor)) {
@@ -42,7 +42,7 @@ class PubSubManager {
     if (isCompleted) notifyCompleted()
   }
 
-  def awaitingCompleted(waiting: ActorRef) {
+  def awaitingCompleted(waiting: ActorRef): Unit = {
     awaitingCompleted ::= waiting
     if (isCompleted) notifyCompleted()
   }
@@ -59,7 +59,7 @@ class PubSubManager {
     subscribers.isMember(member)
   }
 
-  private[this] def removeSubscriber(subscriber: ActorRef) {
+  private[this] def removeSubscriber(subscriber: ActorRef): Unit = {
     val topic = subscribers.topicForMember(subscriber)
     subscribers.removeMember(subscriber)
     val remainingSubscribers = subscribersForTopic(topic)
@@ -68,7 +68,7 @@ class PubSubManager {
     }
   }
 
-  private[this] def removePublisher(publisher: ActorRef) {
+  private[this] def removePublisher(publisher: ActorRef): Unit = {
     publishers.removeMember(publisher)
   }
 
@@ -76,9 +76,9 @@ class PubSubManager {
     publishers.isMember(member)
   }
 
-  private[this] def isCompleted = !subscribers.hasMembers && !publishers.hasMembers
+  private[this] def isCompleted: Boolean = !subscribers.hasMembers && !publishers.hasMembers
 
-  private[this] def notifyCompleted() {
+  private[this] def notifyCompleted(): Unit = {
     awaitingCompleted.foreach(_ ! Completed)
     awaitingCompleted = Nil
   }

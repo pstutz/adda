@@ -32,7 +32,7 @@ class AddaPublisher[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
       context.stop(self)
   }
 
-  def publishNext() {
+  def publishNext(): Unit = {
     while (!queue.isEmpty && isActive && totalDemand > 0) {
       val next = queue.dequeue
       onNext(next)

@@ -1,6 +1,6 @@
 package com.adda.pubsub
 
-import akka.actor.{ActorLogging, ActorRef, actorRef2Scala}
+import akka.actor.{Actor, ActorLogging, ActorRef, actorRef2Scala}
 import akka.event.LoggingReceive
 import akka.stream.actor.ActorSubscriber
 import akka.stream.actor.ActorSubscriberMessage.{OnComplete, OnNext}
@@ -11,7 +11,7 @@ class AddaSubscriber(
 
   val requestStrategy = WatermarkRequestStrategy(50)
 
-  def receive = LoggingReceive {
+  def receive: Actor.Receive = LoggingReceive {
     case OnNext(next: AnyRef) =>
       broadcastActor ! ToBroadcast(next)
     case OnComplete =>

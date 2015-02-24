@@ -19,7 +19,7 @@ abstract class Tagged[C: ClassTag] {
 }
 
 final case class CreatePublisher[C: ClassTag]() extends Tagged[C] {
-  def createPublisher = new AddaPublisher[C]()
+  def createPublisher: AddaPublisher[C] = new AddaPublisher[C]()
 }
 
 final case class CreateSubscriber[C: ClassTag]() extends Tagged[C] {
@@ -73,7 +73,7 @@ class Broadcaster(private[this] val store: TripleStore) extends Actor with Actor
       case g: GraphSerializable =>
         val triples = g.asGraph
         triples.foreach(store.addTriple(_))
-      case other => // Do nothing.
+      case _ => // Do nothing.
     }
   }
 
