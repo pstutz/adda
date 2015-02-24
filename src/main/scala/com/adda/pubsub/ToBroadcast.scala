@@ -1,3 +1,5 @@
 package com.adda.pubsub
 
-final case class ToBroadcast[C <: AnyRef](entity: C)
+import scala.reflect.ClassTag
+
+final case class ToBroadcast[C: ClassTag](entity: C) extends Tagged[C]

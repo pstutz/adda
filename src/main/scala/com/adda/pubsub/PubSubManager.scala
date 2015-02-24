@@ -1,5 +1,7 @@
 package com.adda.pubsub
 
+import scala.reflect.ClassTag
+
 import akka.actor.{ ActorRef, actorRef2Scala }
 
 /**
@@ -14,9 +16,8 @@ class PubSubManager {
   private[this] val subscribers = new MemberManager[ActorRef]
   private[this] val publishers = new MemberManager[ActorRef]
 
-  def broadcastToPublishers[C <: AnyRef](fromSubscriber: ActorRef, itemToBroadcast: ToBroadcast[C]): Unit = {
-    val topic = subscribers.topicForMember(fromSubscriber)
-    publishersForTopic(topic).foreach(_ ! itemToBroadcast)
+  def broadcastToPublishers(fromSubscriber: ActorRef, itemToBroadcast: ToBroadcast[_]): Unit = {
+    publishersForTopic(itemToBroadcast.className).foreach(_ ! itemToBroadcast)
   }
 
   def addSubscriber(topic: String, subscriber: ActorRef): Unit = {

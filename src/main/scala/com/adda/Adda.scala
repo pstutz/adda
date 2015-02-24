@@ -4,17 +4,17 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
 
-import org.reactivestreams.{Publisher, Subscriber}
+import org.reactivestreams.{ Publisher, Subscriber }
 
 import com.adda.adapters.SesameAdapter
-import com.adda.interfaces.{PubSub, SparqlSelect, TripleStore}
-import com.adda.pubsub.{AwaitCompleted, Broadcaster, CreatePublisher, CreateSubscriber}
+import com.adda.interfaces.{ PubSub, SparqlSelect, TripleStore }
+import com.adda.pubsub.{ AwaitCompleted, Broadcaster, CreatePublisher, CreateSubscriber }
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ ActorRef, ActorSystem, Props }
 import akka.pattern.ask
 import akka.stream.ActorFlowMaterializer
-import akka.stream.actor.{ActorPublisher, ActorSubscriber}
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.actor.{ ActorPublisher, ActorSubscriber }
+import akka.stream.scaladsl.{ Sink, Source }
 import akka.util.Timeout
 
 /**
@@ -67,7 +67,19 @@ class Adda extends PubSub with SparqlSelect {
    * published to the triple store before the object is published to any of the subscribers.
    */
   def getSink[C: ClassTag]: Sink[C] = {
-    val subscriber = getSubscriber[C]
+    val subscriber = getSubscriber[C]()
+    val sink = Sink(subscriber)
+    sink
+  }
+
+  /**
+   * Returns an Akka Streams sink that allows to publish objects of class `C'.
+   *
+   * The difference to `getSink' is that this sink is expected to complete soon,
+   * and will never propagate the completion to the sources that subscribe to the class.
+   */
+  def getTemporarySink[C: ClassTag]: Sink[C] = {
+    val subscriber = getSubscriber[C](isTemporary = true)
     val sink = Sink(subscriber)
     sink
   }
@@ -99,9 +111,9 @@ class Adda extends PubSub with SparqlSelect {
     Await.result(publisherFuture, 5.seconds)
   }
 
-  private[this] def getSubscriber[C: ClassTag]: Subscriber[C] = {
+  private[this] def getSubscriber[C: ClassTag](isTemporary: Boolean = false): Subscriber[C] = {
     implicit val timeout = Timeout(5.seconds)
-    val subscriberActorFuture = broadcastActor ? CreateSubscriber[C]()
+    val subscriberActorFuture = broadcastActor ? CreateSubscriber[C](isTemporary)
     val subscriberFuture = subscriberActorFuture.map(s => ActorSubscriber[C](s.asInstanceOf[ActorRef]))
     Await.result(subscriberFuture, 5.seconds)
   }

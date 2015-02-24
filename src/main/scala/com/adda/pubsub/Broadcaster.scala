@@ -22,8 +22,8 @@ final case class CreatePublisher[C: ClassTag]() extends Tagged[C] {
   def createPublisher: AddaPublisher[C] = new AddaPublisher[C]()
 }
 
-final case class CreateSubscriber[C: ClassTag]() extends Tagged[C] {
-  def createSubscriber(broadcaster: ActorRef): AddaSubscriber = new AddaSubscriber(broadcaster)
+final case class CreateSubscriber[C: ClassTag](isTemporary: Boolean) extends Tagged[C] {
+  def createSubscriber(broadcaster: ActorRef): AddaSubscriber[C] = new AddaSubscriber[C](broadcaster)
 }
 
 /**
@@ -41,7 +41,7 @@ class Broadcaster(private[this] val store: TripleStore) extends Actor with Actor
     case c @ CreatePublisher() =>
       val publisher = createPublisher(c)
       sender ! publisher
-    case c @ CreateSubscriber() =>
+    case c @ CreateSubscriber(_) =>
       val subscriber = createSubscriber(c)
       sender ! subscriber
     case toBroadcast @ ToBroadcast(e) =>
@@ -62,12 +62,16 @@ class Broadcaster(private[this] val store: TripleStore) extends Actor with Actor
 
   private[this] def createSubscriber[C](c: CreateSubscriber[C]): ActorRef = {
     val subscriber = context.actorOf(Props(c.createSubscriber(self)))
-    context.watch(subscriber)
-    pubSub.addSubscriber(topic = c.className, subscriber)
+    c.isTemporary match {
+      case false => // We watch and keep track of the non-temporary subscribers. 
+        context.watch(subscriber)
+        pubSub.addSubscriber(topic = c.className, subscriber)
+      case true => // We do not track/watch temporary subscribers.
+    }
     subscriber
   }
 
-  private[this] def serializeToGraph(e: AnyRef): Unit = {
+  private[this] def serializeToGraph(e: Any): Unit = {
     e match {
       // If the entity is graph serializable, add it to the store.
       case g: GraphSerializable =>
