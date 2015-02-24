@@ -1,5 +1,9 @@
 language: scala
 jdk: oraclejdk8
+# Caching substantially improves build performance at the expense of possibly needing to be flushed.
+cache:
+  directories:
+  - $HOME/.m2
 scala:
 - 2.11.5
 script:
