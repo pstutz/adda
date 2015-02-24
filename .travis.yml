@@ -5,10 +5,10 @@ scala:
 script:
 - mvn --settings ./target/settings.xml clean deploy
 before_install:
-- openssl aes-256-cbc -K $encrypted_caf3ddac1184_key -iv $encrypted_caf3ddac1184_iv
-  -in settings.xml.enc -out ./target/settings.xml -d
 - if [ -d target ]; then rm -rf target ; fi
 - mkdir target
+- openssl aes-256-cbc -K $encrypted_caf3ddac1184_key -iv $encrypted_caf3ddac1184_iv
+  -in settings.xml.enc -out ./target/settings.xml -d
 notifications:
   slack: ihealthtechnologies:0y49iFiXZjQyfDpHHWtgyswN#nexgen-build
 env:
