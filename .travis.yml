@@ -8,6 +8,7 @@ scala:
 - 2.11.5
 script:
 - mvn --settings ./target/settings.xml clean deploy
+install: true
 before_install:
 - if [ -d target ]; then rm -rf target ; fi
 - mkdir target
