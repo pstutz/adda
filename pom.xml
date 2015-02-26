@@ -9,7 +9,7 @@
 	<artifactId>adda</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
-	<name>Aagaami</name>
+	<name>Adda</name>
 	<!-- URL for site gen -->
 	<url>${ghe.url.base}/${project.artifactId}</url>
 	<scm>
