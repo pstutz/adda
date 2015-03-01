@@ -4,9 +4,7 @@ import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 
-import com.adda.interfaces.{ GraphSerializable, TripleStore }
-
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props, Terminated, actorRef2Scala }
+import akka.actor.{Actor, ActorLogging, ActorRef, Props, Terminated, actorRef2Scala}
 import akka.event.LoggingReceive
 import akka.util.Timeout
 
@@ -32,10 +30,11 @@ final case class CreateSubscriber[C: ClassTag](isTemporary: Boolean) extends Tag
  *
  * The `awaitingIdle' list keeps track of actors that are waiting for all processing to complete.
  */
-class Broadcaster(private[this] val store: TripleStore) extends Actor with ActorLogging {
+class Broadcaster(privilegedHandlers: List[Any => Unit]) extends Actor with ActorLogging {
   private[this] implicit val timeout = Timeout(20 seconds)
 
   private[this] val pubSub = new PubSubManager
+  private[this] implicit val executor = context.system.dispatcher
 
   def receive: Actor.Receive = LoggingReceive {
     case c @ CreatePublisher() =>
@@ -45,8 +44,19 @@ class Broadcaster(private[this] val store: TripleStore) extends Actor with Actor
       val subscriber = createSubscriber(c)
       sender ! subscriber
     case toBroadcast @ ToBroadcast(e) =>
-      serializeToGraph(e)
+      privilegedHandlers.foreach(_(e))
       pubSub.broadcastToPublishers(fromSubscriber = sender, itemToBroadcast = toBroadcast)
+    //TODO: Can we avoid giving a guarantee of how things are ordered?
+    //      val handlerFuture = Future.sequence(privilegedHandlers.map { handler =>
+    //        Future { handler(e) }
+    //      })
+    //      handlerFuture.onComplete {
+    //        case Success(_) =>
+    //          pubSub.broadcastToPublishers(fromSubscriber = sender, itemToBroadcast = toBroadcast)
+    //        case Failure(f) =>
+    //          f.printStackTrace
+    //          throw f
+    //      }
     case Terminated(actor) =>
       pubSub.remove(actor)
     case AwaitCompleted =>
@@ -69,16 +79,6 @@ class Broadcaster(private[this] val store: TripleStore) extends Actor with Actor
       case true => // We do not track/watch temporary subscribers.
     }
     subscriber
-  }
-
-  private[this] def serializeToGraph(e: Any): Unit = {
-    e match {
-      // If the entity is graph serializable, add it to the store.
-      case g: GraphSerializable =>
-        val triples = g.asGraph
-        triples.foreach(store.addTriple(_))
-      case _ => // Do nothing.
-    }
   }
 
 }

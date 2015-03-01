@@ -4,50 +4,37 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
 
-import org.reactivestreams.{ Publisher, Subscriber }
+import org.reactivestreams.{Publisher, Subscriber}
 
-import com.adda.adapters.SesameAdapter
-import com.adda.interfaces.{ PubSub, SparqlSelect, TripleStore }
-import com.adda.pubsub.{ AwaitCompleted, Broadcaster, CreatePublisher, CreateSubscriber }
+import com.adda.interfaces.PubSub
+import com.adda.pubsub.{AwaitCompleted, Broadcaster, CreatePublisher, CreateSubscriber}
 
-import akka.actor.{ ActorRef, ActorSystem, Props }
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.stream.ActorFlowMaterializer
-import akka.stream.actor.{ ActorPublisher, ActorSubscriber }
-import akka.stream.scaladsl.{ Sink, Source }
+import akka.stream.actor.{ActorPublisher, ActorSubscriber}
+import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
 /**
  * Adda implements simple publish/subscribe for objects sent via Akka Streams.
  * It also exposes a SPARQL API for a triple store.
  *
- * When a GraphSerializable object is published to Adda, then the triples of that object are
- * published to the triple store before the object is published to any of the Adda subscribers.
+ * The handlers in `privilegedHandlers' get called on all entities that Adda receives,
+ * and they are guaranteed to finish running before the entity is passed on to the sinks.
  *
- * Adda automatically completes all sources for a class, when the number of active sinks
+ * Adda automatically completes all sources for a class, when the number of active non-temporary sinks
  * for this class was > 0, and then falls back to 0.
  *
  * PubSub cycles are possible, but in this case the automated stream completion does
  * not work.
  */
-class Adda extends PubSub with SparqlSelect {
+class Adda(private[this] val privilegedHandlers: List[Any => Unit] = Nil) extends PubSub {
 
-  private[this] val store: TripleStore = new SesameAdapter
   private[this] implicit val system: ActorSystem = ActorSystem("Adda")
   private[this] implicit val materializer = ActorFlowMaterializer()
-  private[this] val broadcastActor = system.actorOf(Props(new Broadcaster(store)), "broadcast")
+  private[this] val broadcastActor = system.actorOf(Props(new Broadcaster(privilegedHandlers)), "broadcast")
   import system.dispatcher
-
-  /**
-   * Executes SPARQL select query `query'.
-   *
-   * TODO: Explain the connection between GraphSerializable, publishing objects, and the triple store.
-   *
-   * @return an iterator of query results.
-   */
-  def executeSparqlSelect(query: String): Iterator[String => String] = {
-    store.executeSparqlSelect(query)
-  }
 
   /**
    * Returns an Akka Streams source that is subscribed to all published objects of class `C'.

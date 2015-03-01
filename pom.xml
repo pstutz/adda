@@ -27,14 +27,6 @@
 			<artifactId>akka-stream-experimental_${scala.minor.version}</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.openrdf.sesame</groupId>
-			<artifactId>sesame-repository-sail</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.openrdf.sesame</groupId>
-			<artifactId>sesame-sail-memory</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-nop</artifactId>
 		</dependency>
