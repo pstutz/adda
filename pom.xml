@@ -37,4 +37,8 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	<properties>
+		<akka.version>2.3.9</akka.version>
+		<!--akka.stream.version>1.0-M4</akka.stream.version-->
+	</properties>
 </project>
