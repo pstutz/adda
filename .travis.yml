@@ -6,6 +6,9 @@ cache:
   - $HOME/.m2
 scala:
 - 2.11.5
+branches:
+  only:
+    - master
 script:
 - mvn --settings ./target/settings.xml clean deploy
 install: true
