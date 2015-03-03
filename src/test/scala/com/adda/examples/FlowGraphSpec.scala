@@ -2,8 +2,8 @@ package com.adda.examples
 
 import akka.stream.{ ActorFlowMaterializer, ActorFlowMaterializerSettings }
 import akka.stream.scaladsl._
-import akka.streams.testkit.AkkaSpec
-import akka.streams.testkit.StreamTestKit.SubscriberProbe
+import akka.stream.testkit.AkkaSpec
+import akka.stream.testkit.StreamTestKit.SubscriberProbe
 
 class FlowGraphSpec extends AkkaSpec {
 

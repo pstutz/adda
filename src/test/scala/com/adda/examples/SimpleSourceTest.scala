@@ -4,8 +4,8 @@ import akka.stream.ActorFlowMaterializer
 import akka.stream.ActorFlowMaterializerSettings
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
-import akka.streams.testkit.AkkaSpec
-import akka.streams.testkit.StreamTestKit
+import akka.stream.testkit.AkkaSpec
+import akka.stream.testkit.StreamTestKit
 
 class SimpleSourceTest extends AkkaSpec {
   val settings = ActorFlowMaterializerSettings(system)

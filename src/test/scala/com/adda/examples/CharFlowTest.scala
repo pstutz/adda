@@ -7,7 +7,7 @@ import com.adda.Adda
 import akka.actor.ActorSystem
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.{Flow, Sink, Source}
-import akka.streams.testkit.StreamTestKit
+import akka.stream.testkit.StreamTestKit
 
 /**
  * Created by jahangirmohammed on 2/11/15.
