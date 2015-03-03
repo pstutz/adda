@@ -1,13 +1,13 @@
 package com.adda.examples
 
+import org.scalatest.{FlatSpec, Matchers}
+
+import com.adda.Adda
+
 import akka.actor.ActorSystem
 import akka.stream.ActorFlowMaterializer
-import akka.stream.scaladsl.{Sink, ForeachSink, Flow, Source}
+import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.streams.testkit.StreamTestKit
-import com.adda.Adda
-import org.scalatest.{FlatSpec, Matchers}
-import scala.concurrent.Await
-import scala.concurrent.duration.DurationInt
 
 /**
  * Created by jahangirmohammed on 2/11/15.
@@ -20,7 +20,7 @@ class CharFlowTest extends FlatSpec with Matchers {
     implicit val system = ActorSystem("Test")
     implicit val materializer = ActorFlowMaterializer()
 
-    val lowerCaseToUpperFlow: Flow[Char, Char] = Flow[Char].map(f => {
+    val lowerCaseToUpperFlow: Flow[Char, Char, Unit] = Flow[Char].map(f => {
       f.toUpper
     })
 

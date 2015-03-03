@@ -4,16 +4,16 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
 
-import org.reactivestreams.{Publisher, Subscriber}
+import org.reactivestreams.{ Publisher, Subscriber }
 
 import com.adda.interfaces.PubSub
-import com.adda.pubsub.{AwaitCompleted, Broadcaster, CreatePublisher, CreateSubscriber}
+import com.adda.pubsub.{ AwaitCompleted, Broadcaster, CreatePublisher, CreateSubscriber }
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ ActorRef, ActorSystem, Props }
 import akka.pattern.ask
 import akka.stream.ActorFlowMaterializer
-import akka.stream.actor.{ActorPublisher, ActorSubscriber}
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.actor.{ ActorPublisher, ActorSubscriber }
+import akka.stream.scaladsl.{ Sink, Source }
 import akka.util.Timeout
 
 /**
@@ -40,7 +40,7 @@ class Adda(private[this] val privilegedHandlers: List[Any => Unit] = Nil) extend
    * Returns an Akka Streams source that is subscribed to all published objects of class `C'.
    * Only returns exact instances of `C' and no subclasses.
    */
-  def getSource[C: ClassTag]: Source[C] = {
+  def getSource[C: ClassTag]: Source[C, Unit] = {
     val publisher = getPublisher[C]
     val source = Source(publisher)
     source
@@ -53,7 +53,7 @@ class Adda(private[this] val privilegedHandlers: List[Any => Unit] = Nil) extend
    * When a GraphSerializable object is streamed into this sink, then the triples of that object are
    * published to the triple store before the object is published to any of the subscribers.
    */
-  def getSink[C: ClassTag]: Sink[C] = {
+  def getSink[C: ClassTag]: Sink[C, Unit] = {
     val subscriber = getSubscriber[C]()
     val sink = Sink(subscriber)
     sink
@@ -65,7 +65,7 @@ class Adda(private[this] val privilegedHandlers: List[Any => Unit] = Nil) extend
    * The difference to `getSink' is that this sink is expected to complete soon,
    * and will never propagate the completion to the sources that subscribe to the class.
    */
-  def getTemporarySink[C: ClassTag]: Sink[C] = {
+  def getTemporarySink[C: ClassTag]: Sink[C, Unit] = {
     val subscriber = getSubscriber[C](isTemporary = true)
     val sink = Sink(subscriber)
     sink
