@@ -12,12 +12,12 @@ trait PubSub {
   /**
    * Returns an Akka Streams source that is subscribed to all published objects of class `C'.
    */
-  def getSource[C: ClassTag]: Source[C]
+  def getSource[C: ClassTag]: Source[C, Unit]
 
   /**
    * Returns an Akka Streams sink that allows to publish objects of class `C'.
    */
-  def getSink[C: ClassTag]: Sink[C]
+  def getSink[C: ClassTag]: Sink[C, Unit]
 
   /**
    * Returns an Akka Streams sink that allows to publish objects of class `C'.
@@ -25,7 +25,7 @@ trait PubSub {
    * The difference to `getSink' is that this sink is expected to complete soon,
    * and will never propagate the completion to the sources that subscribe to the class.
    */
-  def getTemporarySink[C: ClassTag]: Sink[C]
+  def getTemporarySink[C: ClassTag]: Sink[C, Unit]
 
   /**
    * Blocking call that returns once all the incoming sinks have completed and all the sources

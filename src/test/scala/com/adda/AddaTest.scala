@@ -2,7 +2,7 @@ package com.adda
 
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.{ ActorFlowMaterializer, ActorFlowMaterializerSettings }
-import akka.streams.testkit.{ StreamTestKit, AkkaSpec }
+import akka.stream.testkit.{ StreamTestKit, AkkaSpec }
 
 class AddaTest extends AkkaSpec {
   val settings = ActorFlowMaterializerSettings(system)

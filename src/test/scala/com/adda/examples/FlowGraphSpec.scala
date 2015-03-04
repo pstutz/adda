@@ -1,9 +1,9 @@
 package com.adda.examples
 
+import akka.stream.{ ActorFlowMaterializer, ActorFlowMaterializerSettings }
 import akka.stream.scaladsl._
-import akka.stream.{ActorFlowMaterializer, ActorFlowMaterializerSettings}
-import akka.streams.testkit.AkkaSpec
-import akka.streams.testkit.StreamTestKit.SubscriberProbe
+import akka.stream.testkit.AkkaSpec
+import akka.stream.testkit.StreamTestKit.SubscriberProbe
 
 class FlowGraphSpec extends AkkaSpec {
 
@@ -14,11 +14,11 @@ class FlowGraphSpec extends AkkaSpec {
   "FlowGraphs" must {
 
     "successfully run a simple flow" in {
-      val p = Source(List(1, 2, 3)).runWith(Sink.publisher)
+      val p = Source(List(1, 2, 3)).runWith(Sink.publisher[Int])
       val subProbe = SubscriberProbe[Int]
       val flow = Flow[Int].map(_ * 2)
-      FlowGraph { implicit builder ⇒
-        import akka.stream.scaladsl.FlowGraphImplicits._
+      FlowGraph.closed() { implicit builder ⇒
+        import FlowGraph.Implicits._
         Source(p) ~> flow ~> Sink(subProbe)
       }.run()
       val sub = subProbe.expectSubscription()
