@@ -37,4 +37,7 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	<properties>
+		<scala.release>6</scala.release>
+	</properties>
 </project>
