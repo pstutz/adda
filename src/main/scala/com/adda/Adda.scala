@@ -3,18 +3,16 @@ package com.adda
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
-
 import org.reactivestreams.{ Publisher, Subscriber }
-
 import com.adda.interfaces.PubSub
 import com.adda.pubsub.{ AwaitCompleted, Broadcaster, CreatePublisher, CreateSubscriber }
-
 import akka.actor.{ ActorRef, ActorSystem, Props }
 import akka.pattern.ask
 import akka.stream.ActorFlowMaterializer
 import akka.stream.actor.{ ActorPublisher, ActorSubscriber }
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.util.Timeout
+import scala.concurrent.Future
 
 /**
  * Adda implements simple publish/subscribe for objects sent via Akka Streams.
@@ -31,9 +29,9 @@ import akka.util.Timeout
  */
 class Adda(private[this] val privilegedHandlers: List[Any => Unit] = Nil) extends PubSub {
 
+  private[this] var broadcasterForTopic = Map.empty[String, ActorRef]
   private[this] implicit val system: ActorSystem = ActorSystem("Adda")
   private[this] implicit val materializer = ActorFlowMaterializer()
-  private[this] val broadcastActor = system.actorOf(Props(new Broadcaster(privilegedHandlers)), "broadcast")
   import system.dispatcher
 
   /**
@@ -79,7 +77,7 @@ class Adda(private[this] val privilegedHandlers: List[Any => Unit] = Nil) extend
    * for this class was > 0, and then falls back to 0.
    */
   def awaitCompleted()(implicit timeout: Timeout = Timeout(60.seconds)): Unit = {
-    val completedFuture = broadcastActor ? AwaitCompleted
+    val completedFuture = Future.sequence(broadcasterForTopic.values.map(b => b ? AwaitCompleted))
     Await.result(completedFuture, timeout.duration)
   }
 
@@ -91,16 +89,37 @@ class Adda(private[this] val privilegedHandlers: List[Any => Unit] = Nil) extend
     system.awaitTermination()
   }
 
+  private[this] def topic[C: ClassTag]: String = {
+    implicitly[ClassTag[C]].runtimeClass.getName
+  }
+
+  private[this] def broadcaster(topic: String): ActorRef = {
+    broadcasterForTopic.get(topic) match {
+      case Some(b) => b
+      case None    => createBroadcasterForTopic(topic)
+    }
+  }
+
+  private[this] def createBroadcasterForTopic(topic: String): ActorRef = {
+    val broadcaster = system.actorOf(Props(new Broadcaster(privilegedHandlers)), topic)
+    broadcasterForTopic += topic -> broadcaster
+    broadcaster
+  }
+
   private[this] def getPublisher[C: ClassTag]: Publisher[C] = {
     implicit val timeout = Timeout(5.seconds)
-    val publisherActorFuture = broadcastActor ? CreatePublisher[C]()
+    val t = topic[C]
+    val b = broadcaster(t)
+    val publisherActorFuture = b ? CreatePublisher[C]()
     val publisherFuture = publisherActorFuture.map(p => ActorPublisher[C](p.asInstanceOf[ActorRef]))
     Await.result(publisherFuture, 5.seconds)
   }
 
   private[this] def getSubscriber[C: ClassTag](isTemporary: Boolean = false): Subscriber[C] = {
     implicit val timeout = Timeout(5.seconds)
-    val subscriberActorFuture = broadcastActor ? CreateSubscriber[C](isTemporary)
+    val t = topic[C]
+    val b = broadcaster(t)
+    val subscriberActorFuture = b ? CreateSubscriber[C](isTemporary)
     val subscriberFuture = subscriberActorFuture.map(s => ActorSubscriber[C](s.asInstanceOf[ActorRef]))
     Await.result(subscriberFuture, 5.seconds)
   }

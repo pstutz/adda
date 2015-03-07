@@ -4,7 +4,7 @@ import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props, Terminated, actorRef2Scala}
+import akka.actor.{ Actor, ActorLogging, ActorRef, Props, Terminated, actorRef2Scala }
 import akka.event.LoggingReceive
 import akka.util.Timeout
 
@@ -30,7 +30,8 @@ final case class CreateSubscriber[C: ClassTag](isTemporary: Boolean) extends Tag
  *
  * The `awaitingIdle' list keeps track of actors that are waiting for all processing to complete.
  */
-class Broadcaster(privilegedHandlers: List[Any => Unit]) extends Actor with ActorLogging {
+class Broadcaster(
+  privilegedHandlers: List[Any => Unit]) extends Actor with ActorLogging {
   private[this] implicit val timeout = Timeout(20 seconds)
 
   private[this] val pubSub = new PubSubManager
@@ -45,7 +46,7 @@ class Broadcaster(privilegedHandlers: List[Any => Unit]) extends Actor with Acto
       sender ! subscriber
     case toBroadcast @ ToBroadcast(e) =>
       privilegedHandlers.foreach(_(e))
-      pubSub.broadcastToPublishers(fromSubscriber = sender, itemToBroadcast = toBroadcast)
+      pubSub.broadcastToPublishers(itemToBroadcast = toBroadcast)
     //TODO: Can we avoid giving a guarantee of how things are ordered?
     //      val handlerFuture = Future.sequence(privilegedHandlers.map { handler =>
     //        Future { handler(e) }
@@ -66,7 +67,7 @@ class Broadcaster(privilegedHandlers: List[Any => Unit]) extends Actor with Acto
   private[this] def createPublisher[C](c: CreatePublisher[C]): ActorRef = {
     val publisher = context.actorOf(Props(c.createPublisher))
     context.watch(publisher)
-    pubSub.addPublisher(topic = c.className, publisher)
+    pubSub.addPublisher(publisher)
     publisher
   }
 
@@ -75,7 +76,7 @@ class Broadcaster(privilegedHandlers: List[Any => Unit]) extends Actor with Acto
     c.isTemporary match {
       case false => // We watch and keep track of the non-temporary subscribers. 
         context.watch(subscriber)
-        pubSub.addSubscriber(topic = c.className, subscriber)
+        pubSub.addSubscriber(subscriber)
       case true => // We do not track/watch temporary subscribers.
     }
     subscriber
