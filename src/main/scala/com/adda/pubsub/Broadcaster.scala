@@ -1,16 +1,21 @@
 package com.adda.pubsub
 
+import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import scala.reflect.ClassTag
+import scala.util.{ Failure, Success }
+
 import akka.actor.{ Actor, ActorLogging, ActorRef, Props, Terminated, actorRef2Scala }
 import akka.event.LoggingReceive
-import akka.util.Timeout
 import akka.stream.actor.ActorSubscriberMessage.OnNext
+import akka.util.Timeout
 
 final case object AwaitCompleted
 
 final case object Completed
+
+final case object CanSendNext
 
 final case class CreatePublisher[C: ClassTag]() {
   def createPublisher: AddaPublisher[C] = new AddaPublisher[C]()
@@ -18,7 +23,7 @@ final case class CreatePublisher[C: ClassTag]() {
 }
 
 final case class CreateSubscriber(isTemporary: Boolean) {
-  def createSubscriber(broadcaster: ActorRef): AddaSubscriber = new AddaSubscriber(broadcaster)
+  def createSubscriber(broadcaster: ActorRef): AddaSubscriber = new AddaSubscriber(isTemporary, broadcaster)
 }
 
 /**
@@ -29,10 +34,9 @@ final case class CreateSubscriber(isTemporary: Boolean) {
  */
 class Broadcaster(
   privilegedHandlers: List[Any => Unit]) extends Actor with ActorLogging {
-  private[this] implicit val timeout = Timeout(20 seconds)
-
-  private[this] val pubSub = new PubSubManager
-  private[this] implicit val executor = context.system.dispatcher
+  implicit val timeout = Timeout(20 seconds)
+  implicit val executor = context.system.dispatcher
+  val pubSub = new PubSubManager
 
   def receive: Actor.Receive = LoggingReceive {
     case c @ CreatePublisher() =>
@@ -42,40 +46,36 @@ class Broadcaster(
       val subscriber = createSubscriber(c)
       sender ! subscriber
     case on @ OnNext(e) =>
-      privilegedHandlers.foreach(_(e))
-      pubSub.broadcastToPublishers(on)
-    //TODO: Can we avoid giving a guarantee of how things are ordered?
-    //      val handlerFuture = Future.sequence(privilegedHandlers.map { handler =>
-    //        Future { handler(e) }
-    //      })
-    //      handlerFuture.onComplete {
-    //        case Success(_) =>
-    //          pubSub.broadcastToPublishers(fromSubscriber = sender, itemToBroadcast = toBroadcast)
-    //        case Failure(f) =>
-    //          f.printStackTrace
-    //          throw f
-    //      }
+      val s = sender
+      val handlerFuture = Future.sequence(privilegedHandlers.map { handler =>
+        Future { handler(e) }
+      })
+      handlerFuture.onComplete {
+        case Success(_) =>
+          pubSub.broadcastToPublishers(on)
+          s ! CanSendNext
+        case Failure(f) =>
+          f.printStackTrace
+          throw f
+      }
     case Terminated(actor) =>
-      pubSub.remove(actor)
+      pubSub.removePublisher(actor)
     case AwaitCompleted =>
       pubSub.awaitingCompleted(sender)
+    case Completed =>
+      pubSub.removeSubscriber(sender)
   }
 
-  private[this] def createPublisher[C](c: CreatePublisher[C]): ActorRef = {
+  def createPublisher[C](c: CreatePublisher[C]): ActorRef = {
     val publisher = context.actorOf(Props(c.createPublisher))
     context.watch(publisher)
     pubSub.addPublisher(publisher)
     publisher
   }
 
-  private[this] def createSubscriber[C](c: CreateSubscriber): ActorRef = {
+  def createSubscriber[C](c: CreateSubscriber): ActorRef = {
     val subscriber = context.actorOf(Props(c.createSubscriber(self)))
-    c.isTemporary match {
-      case false => // We watch and keep track of the non-temporary subscribers. 
-        context.watch(subscriber)
-        pubSub.addSubscriber(subscriber)
-      case true => // We do not track/watch temporary subscribers.
-    }
+    if (!c.isTemporary) pubSub.addSubscriber(subscriber)
     subscriber
   }
 

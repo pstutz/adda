@@ -1,6 +1,5 @@
 package com.adda.pubsub
 
-import scala.reflect.ClassTag
 import akka.actor.{ ActorRef, actorRef2Scala }
 import akka.stream.actor.ActorSubscriberMessage.OnNext
 
@@ -28,20 +27,15 @@ class PubSubManager {
     publishers += publisher
   }
 
-  /**
-   * Has to be either a publisher or a subscriber.
-   */
-  def remove(actor: ActorRef): Unit = {
-    if (subscribers.contains(actor)) {
-      subscribers -= actor
-      if (subscribers.isEmpty) {
-        publishers.foreach(_ ! Complete)
-      }
-    } else if (publishers.contains(actor)) {
-      publishers -= actor
-    } else {
-      throw new Exception(
-        s"Actor needs to be either a publisher or a subscriber. $actor is neither.")
+  def removePublisher(publisher: ActorRef): Unit = {
+    publishers -= publisher
+    if (isCompleted) notifyCompleted()
+  }
+
+  def removeSubscriber(subscriber: ActorRef): Unit = {
+    subscribers -= subscriber
+    if (subscribers.isEmpty) {
+      publishers.foreach(_ ! Complete)
     }
     if (isCompleted) notifyCompleted()
   }
