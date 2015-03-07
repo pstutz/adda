@@ -1,8 +1,7 @@
 package com.adda.pubsub
 
-import scala.reflect.ClassTag
-
 import akka.actor.{ ActorRef, actorRef2Scala }
+import akka.stream.actor.ActorSubscriberMessage.OnNext
 
 /**
  * An actor can either be a publisher or a subscriber, never both.
@@ -13,32 +12,30 @@ import akka.actor.{ ActorRef, actorRef2Scala }
 class PubSubManager {
 
   private[this] var awaitingCompleted: List[ActorRef] = Nil
-  private[this] val subscribers = new MemberManager[ActorRef]
-  private[this] val publishers = new MemberManager[ActorRef]
+  private[this] var subscribers = Set.empty[ActorRef]
+  private[this] var publishers = Set.empty[ActorRef]
 
-  def broadcastToPublishers(fromSubscriber: ActorRef, itemToBroadcast: ToBroadcast[_]): Unit = {
-    publishersForTopic(itemToBroadcast.className).foreach(_ ! itemToBroadcast)
+  def broadcastToPublishers(toBroadcast: OnNext): Unit = {
+    publishers.foreach(_ ! toBroadcast)
   }
 
-  def addSubscriber(topic: String, subscriber: ActorRef): Unit = {
-    subscribers.addMember(topic, subscriber)
+  def addSubscriber(subscriber: ActorRef): Unit = {
+    subscribers += subscriber
   }
 
-  def addPublisher(topic: String, publisher: ActorRef): Unit = {
-    publishers.addMember(topic, publisher)
+  def addPublisher(publisher: ActorRef): Unit = {
+    publishers += publisher
   }
 
-  /**
-   * Has to be either a publisher or a subscriber.
-   */
-  def remove(actor: ActorRef): Unit = {
-    if (isSubscriber(actor)) {
-      removeSubscriber(actor)
-    } else if (isPublisher(actor)) {
-      removePublisher(actor)
-    } else {
-      throw new Exception(
-        s"Actor needs to be either a publisher or a subscriber. $actor is neither.")
+  def removePublisher(publisher: ActorRef): Unit = {
+    publishers -= publisher
+    if (isCompleted) notifyCompleted()
+  }
+
+  def removeSubscriber(subscriber: ActorRef): Unit = {
+    subscribers -= subscriber
+    if (subscribers.isEmpty) {
+      publishers.foreach(_ ! Complete)
     }
     if (isCompleted) notifyCompleted()
   }
@@ -48,36 +45,7 @@ class PubSubManager {
     if (isCompleted) notifyCompleted()
   }
 
-  private[this] def subscribersForTopic(topic: String): Set[ActorRef] = {
-    subscribers.membersForTopic(topic)
-  }
-
-  private[this] def publishersForTopic(topic: String): Set[ActorRef] = {
-    publishers.membersForTopic(topic)
-  }
-
-  private[this] def isSubscriber(member: ActorRef): Boolean = {
-    subscribers.isMember(member)
-  }
-
-  private[this] def removeSubscriber(subscriber: ActorRef): Unit = {
-    val topic = subscribers.topicForMember(subscriber)
-    subscribers.removeMember(subscriber)
-    val remainingSubscribers = subscribersForTopic(topic)
-    if (remainingSubscribers.isEmpty) {
-      publishersForTopic(topic).foreach(_ ! Complete)
-    }
-  }
-
-  private[this] def removePublisher(publisher: ActorRef): Unit = {
-    publishers.removeMember(publisher)
-  }
-
-  private[this] def isPublisher(member: ActorRef): Boolean = {
-    publishers.isMember(member)
-  }
-
-  private[this] def isCompleted: Boolean = !subscribers.hasMembers && !publishers.hasMembers
+  private[this] def isCompleted: Boolean = subscribers.isEmpty && publishers.isEmpty
 
   private[this] def notifyCompleted(): Unit = {
     awaitingCompleted.foreach(_ ! Completed)
