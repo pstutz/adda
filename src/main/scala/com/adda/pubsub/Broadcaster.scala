@@ -3,25 +3,22 @@ package com.adda.pubsub
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import scala.reflect.ClassTag
-
 import akka.actor.{ Actor, ActorLogging, ActorRef, Props, Terminated, actorRef2Scala }
 import akka.event.LoggingReceive
 import akka.util.Timeout
+import akka.stream.actor.ActorSubscriberMessage.OnNext
 
 final case object AwaitCompleted
 
 final case object Completed
 
-abstract class Tagged[C: ClassTag] {
+final case class CreatePublisher[C: ClassTag]() {
+  def createPublisher: AddaPublisher[C] = new AddaPublisher[C]()
   val className = implicitly[ClassTag[C]].runtimeClass.getName
 }
 
-final case class CreatePublisher[C: ClassTag]() extends Tagged[C] {
-  def createPublisher: AddaPublisher[C] = new AddaPublisher[C]()
-}
-
-final case class CreateSubscriber[C: ClassTag](isTemporary: Boolean) extends Tagged[C] {
-  def createSubscriber(broadcaster: ActorRef): AddaSubscriber[C] = new AddaSubscriber[C](broadcaster)
+final case class CreateSubscriber(isTemporary: Boolean) {
+  def createSubscriber(broadcaster: ActorRef): AddaSubscriber = new AddaSubscriber(broadcaster)
 }
 
 /**
@@ -44,9 +41,9 @@ class Broadcaster(
     case c @ CreateSubscriber(_) =>
       val subscriber = createSubscriber(c)
       sender ! subscriber
-    case toBroadcast @ ToBroadcast(e) =>
+    case on @ OnNext(e) =>
       privilegedHandlers.foreach(_(e))
-      pubSub.broadcastToPublishers(itemToBroadcast = toBroadcast)
+      pubSub.broadcastToPublishers(on)
     //TODO: Can we avoid giving a guarantee of how things are ordered?
     //      val handlerFuture = Future.sequence(privilegedHandlers.map { handler =>
     //        Future { handler(e) }
@@ -71,7 +68,7 @@ class Broadcaster(
     publisher
   }
 
-  private[this] def createSubscriber[C](c: CreateSubscriber[C]): ActorRef = {
+  private[this] def createSubscriber[C](c: CreateSubscriber): ActorRef = {
     val subscriber = context.actorOf(Props(c.createSubscriber(self)))
     c.isTemporary match {
       case false => // We watch and keep track of the non-temporary subscribers. 

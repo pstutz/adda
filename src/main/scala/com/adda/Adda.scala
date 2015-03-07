@@ -119,7 +119,7 @@ class Adda(private[this] val privilegedHandlers: List[Any => Unit] = Nil) extend
     implicit val timeout = Timeout(5.seconds)
     val t = topic[C]
     val b = broadcaster(t)
-    val subscriberActorFuture = b ? CreateSubscriber[C](isTemporary)
+    val subscriberActorFuture = b ? CreateSubscriber(isTemporary)
     val subscriberFuture = subscriberActorFuture.map(s => ActorSubscriber[C](s.asInstanceOf[ActorRef]))
     Await.result(subscriberFuture, 5.seconds)
   }

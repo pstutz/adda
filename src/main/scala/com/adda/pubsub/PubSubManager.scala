@@ -1,8 +1,8 @@
 package com.adda.pubsub
 
 import scala.reflect.ClassTag
-
 import akka.actor.{ ActorRef, actorRef2Scala }
+import akka.stream.actor.ActorSubscriberMessage.OnNext
 
 /**
  * An actor can either be a publisher or a subscriber, never both.
@@ -16,8 +16,8 @@ class PubSubManager {
   private[this] var subscribers = Set.empty[ActorRef]
   private[this] var publishers = Set.empty[ActorRef]
 
-  def broadcastToPublishers(itemToBroadcast: Any): Unit = {
-    publishers.foreach(_ ! itemToBroadcast)
+  def broadcastToPublishers(toBroadcast: OnNext): Unit = {
+    publishers.foreach(_ ! toBroadcast)
   }
 
   def addSubscriber(subscriber: ActorRef): Unit = {
