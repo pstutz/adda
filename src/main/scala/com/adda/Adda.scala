@@ -29,9 +29,9 @@ import scala.concurrent.Future
  */
 class Adda(private[this] val privilegedHandlers: List[Any => Unit] = Nil) extends PubSub {
 
-  private[this] var broadcasterForTopic = Map.empty[String, ActorRef]
-  private[this] implicit val system: ActorSystem = ActorSystem("Adda")
-  private[this] implicit val materializer = ActorFlowMaterializer()
+  var broadcasterForTopic = Map.empty[String, ActorRef]
+  implicit val system: ActorSystem = ActorSystem("Adda")
+  implicit val materializer = ActorFlowMaterializer()
   import system.dispatcher
 
   /**

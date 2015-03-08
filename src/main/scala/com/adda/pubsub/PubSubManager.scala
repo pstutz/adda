@@ -2,6 +2,7 @@ package com.adda.pubsub
 
 import akka.actor.{ ActorRef, actorRef2Scala }
 import akka.stream.actor.ActorSubscriberMessage.OnNext
+import scala.collection.immutable.Queue
 
 /**
  * An actor can either be a publisher or a subscriber, never both.
@@ -17,6 +18,10 @@ class PubSubManager {
 
   def broadcastToPublishers(toBroadcast: OnNext): Unit = {
     publishers.foreach(_ ! toBroadcast)
+  }
+
+  def bulkBroadcastToPublishers(bulk: Queue[_]): Unit = {
+    publishers.foreach(_ ! bulk)
   }
 
   def addSubscriber(subscriber: ActorRef): Unit = {

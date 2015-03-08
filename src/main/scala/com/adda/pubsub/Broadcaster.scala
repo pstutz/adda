@@ -5,11 +5,11 @@ import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 import scala.util.{ Failure, Success }
-
 import akka.actor.{ Actor, ActorLogging, ActorRef, Props, Terminated, actorRef2Scala }
 import akka.event.LoggingReceive
 import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.util.Timeout
+import scala.collection.immutable.Queue
 
 final case object AwaitCompleted
 
@@ -53,6 +53,19 @@ class Broadcaster(
       handlerFuture.onComplete {
         case Success(_) =>
           pubSub.broadcastToPublishers(on)
+          s ! CanSendNext
+        case Failure(f) =>
+          f.printStackTrace
+          throw f
+      }
+    case bulk: Queue[_] =>
+      val s = sender
+      val handlerFuture = Future.sequence(privilegedHandlers.map { handler =>
+        Future { bulk.map(handler) }
+      })
+      handlerFuture.onComplete {
+        case Success(_) =>
+          pubSub.bulkBroadcastToPublishers(bulk)
           s ! CanSendNext
         case Failure(f) =>
           f.printStackTrace
