@@ -4,7 +4,7 @@ import scala.collection.mutable
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 
-import akka.actor.ActorLogging
+import akka.actor.{ Actor, ActorLogging }
 import akka.event.LoggingReceive
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.{ Cancel, Request }
@@ -17,7 +17,7 @@ class AddaPublisher[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
   val queue = mutable.Queue.empty[C]
   var completeReceived = false
 
-  def receive = LoggingReceive {
+  def receive: Actor.Receive = LoggingReceive {
     case OnNext(e) =>
       e match {
         case successfulMatch: C =>
