@@ -11,7 +11,7 @@ import akka.stream.testkit.StreamTestKit
 
 class HandlerTest extends FlatSpec with Matchers {
 
-  "A privileged handler" should "handler all published entities" in {
+  "A privileged handler" should "receive all published entities" in {
 
     val counter = new AtomicInteger
     def intHandler(e: Any) = {
