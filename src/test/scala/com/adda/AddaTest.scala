@@ -139,6 +139,22 @@ class AddaTest extends AkkaSpec {
         adda.shutdown
       }
     }
+    
+    "support canceling a stream before all elements are streamed" in {
+      val adda = new Adda
+      try {
+        val probe = StreamTestKit.SubscriberProbe[Int]
+        adda.getSource[Int].take(1).to(Sink(probe)).run
+        Source(List(1, 2, 3)).to(adda.getSink[Int]).run
+        probe.expectSubscription().request(10)
+        probe.expectNext(1)
+        probe.expectComplete
+        adda.awaitCompleted
+      } finally {
+        adda.shutdown
+      }
+    }
+    
   }
 
 }

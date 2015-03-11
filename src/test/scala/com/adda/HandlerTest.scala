@@ -44,6 +44,6 @@ class HandlerTest extends FlatSpec with Matchers {
 
     adda.awaitCompleted()
     adda.shutdown()
-
   }
+
 }
