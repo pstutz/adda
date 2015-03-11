@@ -13,7 +13,7 @@ import java.util.ArrayDeque
 
 final case object Complete
 
-class AddaPublisher[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
+class AddaSource[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
 
   val queue = new ArrayDeque[C]()
   var completeReceived = false

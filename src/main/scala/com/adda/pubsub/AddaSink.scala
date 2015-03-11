@@ -8,7 +8,7 @@ import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
 import akka.stream.actor.WatermarkRequestStrategy
 import scala.collection.immutable.Queue
 
-class AddaSubscriber(
+class AddaSink(
   val isTemporary: Boolean,
   val broadcaster: ActorRef) extends ActorSubscriber with ActorLogging {
 
