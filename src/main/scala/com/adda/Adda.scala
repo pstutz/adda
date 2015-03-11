@@ -27,10 +27,11 @@ import scala.concurrent.Future
  * PubSub cycles are possible, but in this case the automated stream completion does
  * not work.
  */
-class Adda(private[this] val privilegedHandlers: List[Any => Unit] = Nil) extends PubSub {
+class Adda(
+  private[this] val privilegedHandlers: List[Any => Unit] = Nil,
+  private[this] implicit val system: ActorSystem = ActorSystem("Adda")) extends PubSub {
 
   var broadcasterForTopic = Map.empty[String, ActorRef]
-  implicit val system: ActorSystem = ActorSystem("Adda")
   implicit val materializer = ActorFlowMaterializer()
   import system.dispatcher
 
