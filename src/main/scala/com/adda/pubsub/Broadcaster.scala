@@ -18,12 +18,12 @@ final case object Completed
 final case object CanSendNext
 
 final case class CreatePublisher[C: ClassTag]() {
-  def createPublisher: AddaPublisher[C] = new AddaPublisher[C]()
+  def createPublisher: AddaSource[C] = new AddaSource[C]()
   val className = implicitly[ClassTag[C]].runtimeClass.getName
 }
 
 final case class CreateSubscriber(isTemporary: Boolean) {
-  def createSubscriber(broadcaster: ActorRef): AddaSubscriber = new AddaSubscriber(isTemporary, broadcaster)
+  def createSubscriber(broadcaster: ActorRef): AddaSink = new AddaSink(isTemporary, broadcaster)
 }
 
 /**
@@ -47,28 +47,24 @@ class Broadcaster(
       sender ! subscriber
     case on @ OnNext(e) =>
       val s = sender
-      val handlerFuture = Future.sequence(privilegedHandlers.map { handler =>
-        Future { handler(e) }
-      })
+      val handlerFuture = Future.sequence(privilegedHandlers.
+        map(handler => Future(handler(e))))
       handlerFuture.onComplete {
         case Success(_) =>
           pubSub.broadcastToPublishers(on)
           s ! CanSendNext
         case Failure(f) =>
-          f.printStackTrace
           throw f
       }
     case bulk: Queue[_] =>
       val s = sender
-      val handlerFuture = Future.sequence(privilegedHandlers.map { handler =>
-        Future { bulk.map(handler) }
-      })
+      val handlerFuture = Future.sequence(privilegedHandlers.
+        map(handler => Future(bulk.map(handler))))
       handlerFuture.onComplete {
         case Success(_) =>
           pubSub.bulkBroadcastToPublishers(bulk)
           s ! CanSendNext
         case Failure(f) =>
-          f.printStackTrace
           throw f
       }
     case Terminated(actor) =>
