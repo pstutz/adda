@@ -41,6 +41,5 @@ class CharFlowTest extends FlatSpec with Matchers {
     
     probe.expectComplete()
 
-
   }
 }
