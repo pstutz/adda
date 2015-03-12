@@ -35,6 +35,7 @@ class AddaSink(
       }
     case OnComplete =>
       shouldComplete = true
+      log.debug(s"$this OnComplete")
       if (bulkMessage.isEmpty && canSendNext) complete
     case OnError(e) =>
       log.error(e, s"Adda sink received error ${e.getMessage} from $sender")

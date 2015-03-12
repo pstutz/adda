@@ -29,6 +29,7 @@ class AddaSource[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
       publishNext()
     case Complete =>
       completeReceived = true
+      log.debug(s"$this Complete")
       if (isActive) publishNext()
     case Cancel =>
       context.stop(self)

@@ -68,10 +68,12 @@ class Broadcaster(
           throw f
       }
     case Terminated(actor) =>
+      log.debug(s"Removing Publisher $actor")
       pubSub.removePublisher(actor)
     case AwaitCompleted =>
       pubSub.awaitingCompleted(sender)
     case Completed =>
+      log.debug(s"Removing Subscriber $sender")
       pubSub.removeSubscriber(sender)
   }
 
