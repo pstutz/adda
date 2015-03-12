@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.ihealthtechnologies</groupId>
 		<artifactId>nexgen-scala-parent</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>0.0.1</version>
 	</parent>
 	<artifactId>adda</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
@@ -37,7 +37,4 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-	<properties>
-		<scala.release>6</scala.release>
-	</properties>
 </project>
