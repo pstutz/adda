@@ -33,7 +33,7 @@
 		<dependency>
 			<groupId>com.ihealthtechnologies</groupId> <!-- TODO Where does this come from? -->
 			<artifactId>akka-stream-testkit_${scala.minor.version}</artifactId>
-			<version>1.0.1-SNAPSHOT</version> <!-- TODO Migrate to higher dependencyManagement eventually -->
+			<version>2.0.0</version> <!-- TODO Migrate to higher dependencyManagement eventually -->
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
