@@ -13,6 +13,7 @@ import akka.stream.actor.{ ActorPublisher, ActorSubscriber }
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.util.Timeout
 import scala.concurrent.Future
+import akka.event.Logging
 
 /**
  * Adda implements simple publish/subscribe for objects sent via Akka Streams.
@@ -34,6 +35,7 @@ class Adda(
   var broadcasterForTopic = Map.empty[String, ActorRef]
   implicit val materializer = ActorFlowMaterializer()
   import system.dispatcher
+  private[this] val log = Logging.getLogger(system.eventStream, "Adda")
 
   /**
    * Returns an Akka Streams source that is subscribed to all published objects of class `C'.
@@ -86,6 +88,7 @@ class Adda(
    * Blocking call that shuts down Adda and returns when the shutdown is completed.
    */
   def shutdown(): Unit = {
+    log.warning("Shutting down Adda")
     system.shutdown()
     system.awaitTermination()
   }
