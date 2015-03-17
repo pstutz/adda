@@ -1,14 +1,13 @@
-package com.adda
+package com.adda.integration
 
+import com.adda.Adda
+
+import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.{ Sink, Source }
-import akka.stream.{ ActorFlowMaterializer, ActorFlowMaterializerSettings }
-import akka.stream.testkit.{ StreamTestKit, AkkaSpec }
+import akka.stream.testkit.{ AkkaSpec, StreamTestKit }
 
-class AddaTest extends AkkaSpec {
-  val settings = ActorFlowMaterializerSettings(system)
-    .withInputBuffer(initialSize = 2, maxSize = 16)
-
-  implicit val materializer = ActorFlowMaterializer(settings)
+class SinkAndSourceTest extends AkkaSpec {
+  implicit val materializer = ActorFlowMaterializer()
 
   "Adda" must {
     "broadcast from one sink to one source" in {
@@ -139,7 +138,7 @@ class AddaTest extends AkkaSpec {
         adda.shutdown
       }
     }
-    
+
     "support canceling a stream before all elements are streamed" in {
       val adda = new Adda
       try {
@@ -154,7 +153,23 @@ class AddaTest extends AkkaSpec {
         adda.shutdown
       }
     }
-    
+
+    "support calling `awaitCompleted' before any sink/source is attached" in {
+      val adda = new Adda
+      try {
+        adda.awaitCompleted
+        val probe = StreamTestKit.SubscriberProbe[Int]
+        adda.getSource[Int].to(Sink(probe)).run
+        Source(List(1)).to(adda.getSink[Int]).run
+        probe.expectSubscription().request(10)
+        probe.expectNext(1)
+        probe.expectComplete
+        adda.awaitCompleted
+      } finally {
+        adda.shutdown
+      }
+    }
+
   }
 
 }
