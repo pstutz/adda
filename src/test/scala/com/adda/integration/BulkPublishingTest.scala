@@ -1,13 +1,15 @@
-package com.adda
+package com.adda.integration
 
 import org.scalatest.{ Finders, FlatSpec, Matchers }
+
+import com.adda.Adda
 
 import akka.actor.ActorSystem
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.testkit.StreamTestKit
 
-class BulkTest extends FlatSpec with Matchers {
+class BulkPublishingTest extends FlatSpec with Matchers {
 
   "Adda" should "deliver bulked messages in the correct order" in {
 

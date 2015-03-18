@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>com.ihealthtechnologies</groupId>
@@ -15,8 +16,11 @@
 		<connection>scm:git:${git.url}</connection>
 		<url>scm:git:${git.url}</url>
 		<developerConnection>scm:git:${git.url}</developerConnection>
-	  <tag>HEAD</tag>
-  </scm>
+		<tag>HEAD</tag>
+	</scm>
+	<properties>
+		<scalatest.version>2.2.3</scalatest.version>
+	</properties>
 	<dependencyManagement>
 		<dependencies>
 		</dependencies>
@@ -29,6 +33,12 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-nop</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.scalacheck</groupId>
+			<artifactId>scalacheck_${scala.minor.version}</artifactId>
+			<version>1.12.2</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.ihealthtechnologies</groupId> <!-- TODO Where does this come from? -->
