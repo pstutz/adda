@@ -83,19 +83,17 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
 
     "support single-publisher/multiple-subscribers pubsub for strings" in {
       val adda = new Adda
-      check {
-        Prop.forAll(genPublishableStrings, genSubscriberCount) {
-          (elements: List[String], numberOfSubscribers: Int) =>
-            val probeA = SubscriberProbe[String]
-            val probeB = SubscriberProbe[String]
-            adda.getSource[String].to(Sink(probeA)).run
-            adda.getSource[String].to(Sink(probeB)).run
-            Source(elements).to(adda.getSink[String]).run
-            verifyWithProbe(elements, probeA)
-            verifyWithProbe(elements, probeB)
-            adda.awaitCompleted
-            successfulTest
-        }
+      Prop.forAll(genPublishableStrings, genSubscriberCount) {
+        (elements: List[String], numberOfSubscribers: Int) =>
+          val probeA = SubscriberProbe[String]
+          val probeB = SubscriberProbe[String]
+          adda.getSource[String].to(Sink(probeA)).run
+          adda.getSource[String].to(Sink(probeB)).run
+          Source(elements).to(adda.getSink[String]).run
+          verifyWithProbe(elements, probeA)
+          verifyWithProbe(elements, probeB)
+          adda.awaitCompleted
+          successfulTest
       }
       adda.shutdown
     }
