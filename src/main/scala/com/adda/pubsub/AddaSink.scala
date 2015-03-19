@@ -12,7 +12,8 @@ class AddaSink(
   val isTemporary: Boolean,
   val broadcaster: ActorRef) extends ActorSubscriber with ActorLogging with Stash {
 
-  import context.become
+  import context._ 
+  
   val emptyQueue = Queue.empty[Any]
 
   val requestStrategy = WatermarkRequestStrategy(50)
@@ -22,11 +23,11 @@ class AddaSink(
    */
   def queuing(queued: Queue[Any]): Actor.Receive = LoggingReceive {
     case n @ OnNext(e) =>
-      context.become(queuing(queued.enqueue(e)))
+      become(queuing(queued.enqueue(e)))
     case CanSendNext =>
       if (queued.isEmpty) {
         unstashAll()
-        context.become(receive)
+        become(receive)
       } else {
         broadcaster ! queued
         become(queuing(emptyQueue))
@@ -45,7 +46,7 @@ class AddaSink(
       throw new Exception("AddaSink received CanSendNext, but was in queuing mode.")
     case OnComplete =>
       if (!isTemporary) broadcaster ! Completed
-      context.stop(self)
+      stop(self)
     case OnError(e) =>
       handleError(e)
   }
