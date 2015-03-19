@@ -1,15 +1,16 @@
 package com.adda.pubsub
 
+import scala.collection.immutable.Queue
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 import scala.util.{ Failure, Success }
+
 import akka.actor.{ Actor, ActorLogging, ActorRef, Props, Terminated, actorRef2Scala }
 import akka.event.LoggingReceive
 import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.util.Timeout
-import scala.collection.immutable.Queue
 
 final case object AwaitCompleted
 
@@ -40,11 +41,9 @@ class Broadcaster(
 
   def receive: Actor.Receive = LoggingReceive {
     case c @ CreatePublisher() =>
-      val publisher = createPublisher(c)
-      sender ! publisher
+      sender ! createPublisher(c)
     case c @ CreateSubscriber(_) =>
-      val subscriber = createSubscriber(c)
-      sender ! subscriber
+      sender ! createSubscriber(c)
     case on @ OnNext(e) =>
       val s = sender
       val handlerFuture = Future.sequence(privilegedHandlers.
