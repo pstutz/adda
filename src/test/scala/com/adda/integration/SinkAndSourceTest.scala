@@ -1,14 +1,16 @@
 package com.adda.integration
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
 
-import org.scalacheck.{ Gen, Prop }
 import org.scalacheck.Arbitrary.arbContainer
+import org.scalacheck.Prop
 import org.scalacheck.Prop.propBoolean
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.Checkers
 
 import com.adda.Adda
+import com.adda.Generators.{ genListOfPublishableStrings, genPublishableStrings, genSubscriberCount }
 import com.adda.TestingConstants.{ probeMinItemsRequested, successfulTest }
 
 import akka.stream.ActorFlowMaterializer
@@ -18,22 +20,6 @@ import akka.stream.testkit.StreamTestKit.SubscriberProbe
 
 class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
   implicit val materializer = ActorFlowMaterializer()
-
-  /**
-   * Limit maximum number of tested sinks to 10000.
-   */
-  val genSubscriberCount = Gen.choose(0, 10000)
-
-  /**
-   * Only test with one or more string publishers. If none are ever added,
-   * then the stream is not completed.
-   */
-  val genListOfPublishableStrings = Gen.nonEmptyListOf(genPublishableStrings)
-
-  /**
-   * Generates a list of alphanumeric strings that can be published.
-   */
-  val genPublishableStrings = Gen.listOf(Gen.alphaStr)
 
   /**
    * Verifies that a sink receives the elements in `l', when they are streamed into Adda by a source.
@@ -98,38 +84,39 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
       adda.shutdown
     }
 
-//    "support multiple-publishers/single-subscriber pubsub for strings" in {
-//      val adda = new Adda
-//      check(Prop.forAll(genListOfPublishableStrings) {
-//        (sourceElements: List[List[String]]) =>
-//          val receivedFromAdda = adda.getSource[String].runFold(Set.empty[String])(setAdditionFold)
-//          val sources = sourceElements.map(Source(_).to(adda.getSink[String]))
-//          sources.foreach(_.run)
-//          val expectedElementSet = sourceElements.flatten.toSet
-//          whenReady(receivedFromAdda)(_ should be(expectedElementSet))
-//          adda.awaitCompleted
-//          successfulTest
-//      })
-//      adda.shutdown
-//    }
-//
-//    "support multiple-publishers/multiple-subscribers pubsub for strings" in {
-//      val adda = new Adda
-//      check(Prop.forAll(genListOfPublishableStrings, genSubscriberCount) {
-//        (sourceElements: List[List[String]], numberOfSubscribers: Int) =>
-//          val subscriberResultSetFutures = List.fill(numberOfSubscribers)(
-//            adda.getSource[String].runFold(Set.empty[String])(setAdditionFold))
-//          val publishers = sourceElements.map(Source(_).to(adda.getSink[String]))
-//          publishers.foreach(_.run)
-//          val expectedResultSet = sourceElements.flatten.toSet
-//          subscriberResultSetFutures.foreach { resultSetFuture =>
-//            whenReady(resultSetFuture)(_ should be(expectedResultSet))
-//          }
-//          adda.awaitCompleted
-//          successfulTest
-//      })
-//      adda.shutdown
-//    }
+    "support multiple-publishers/single-subscriber pubsub for strings" in {
+      val adda = new Adda
+      check(Prop.forAll(genListOfPublishableStrings) {
+        (sourceElements: List[List[String]]) =>
+          val receivedFromAdda = adda.getSource[String].runFold(Set.empty[String])(setAdditionFold)
+          val sources = sourceElements.map(Source(_).to(adda.getSink[String]))
+          sources.foreach(_.run)
+          val expectedElementSet = sourceElements.flatten.toSet
+          receivedFromAdda.onFailure { case t: Throwable => t.printStackTrace() }
+          whenReady(receivedFromAdda)(_ should be(expectedElementSet))
+          adda.awaitCompleted
+          successfulTest
+      })
+      adda.shutdown
+    }
+
+    "support multiple-publishers/multiple-subscribers pubsub for strings" in {
+      val adda = new Adda
+      check(Prop.forAll(genListOfPublishableStrings, genSubscriberCount) {
+        (sourceElements: List[List[String]], numberOfSubscribers: Int) =>
+          val subscriberResultSetFutures = List.fill(numberOfSubscribers)(
+            adda.getSource[String].runFold(Set.empty[String])(setAdditionFold))
+          val publishers = sourceElements.map(Source(_).to(adda.getSink[String]))
+          publishers.foreach(_.run)
+          val expectedResultSet = sourceElements.flatten.toSet
+          subscriberResultSetFutures.foreach { resultSetFuture =>
+            whenReady(resultSetFuture)(_ should be(expectedResultSet))
+          }
+          adda.awaitCompleted
+          successfulTest
+      })
+      adda.shutdown
+    }
 
     "support waiting for completion repeatedly" in {
       val adda = new Adda
