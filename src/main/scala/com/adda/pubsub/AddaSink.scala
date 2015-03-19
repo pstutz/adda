@@ -20,8 +20,7 @@ class AddaSink(
   /**
    * Receive function that queues received elements whilst waiting for `CanSendNext'.
    */
-  def queuing(
-    queued: Queue[Any] = emptyQueue): Actor.Receive = LoggingReceive {
+  def queuing(queued: Queue[Any]): Actor.Receive = LoggingReceive {
     case n @ OnNext(e) =>
       context.become(queuing(queued.enqueue(e)))
     case CanSendNext =>
