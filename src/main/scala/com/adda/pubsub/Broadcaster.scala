@@ -7,7 +7,7 @@ import scala.language.postfixOps
 import scala.reflect.ClassTag
 import scala.util.{ Failure, Success }
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props, Terminated, actorRef2Scala }
+import akka.actor.{ Actor, ActorLogging, ActorRef, Props, Stash, Terminated, actorRef2Scala }
 import akka.event.LoggingReceive
 import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.util.Timeout
@@ -28,65 +28,99 @@ final case class CreateSubscriber(isTemporary: Boolean) {
 }
 
 /**
- * Once the number of non-completed sinks for a class was > 0, and then falls back to 0, all
- * sources connected with that class are completed.
+ * Once the number of publishers for the topic was > 0, and then falls back to 0, all
+ * subscribers connected with that topic are completed.
  *
  * The `awaitingIdle' list keeps track of actors that are waiting for all processing to complete.
  */
 class Broadcaster(
-  privilegedHandlers: List[Any => Unit]) extends Actor with ActorLogging {
+  privilegedHandlers: List[Any => Unit]) extends Actor with ActorLogging with Stash {
+
+  import context._
   implicit val timeout = Timeout(20 seconds)
-  implicit val executor = context.system.dispatcher
-  val pubSub = new PubSubManager
+
+  def broadcaster(pubSub: PubSubManager): Actor.Receive = LoggingReceive {
+    case creationRequest @ CreatePublisher()   => createPublisher(creationRequest, pubSub)
+    case creationRequest @ CreateSubscriber(_) => createSubscriber(creationRequest, pubSub)
+    case on: OnNext                            => onNext(on, pubSub)
+    case bulk: Queue[_]                        => onBulkNext(bulk, pubSub)
+    case Terminated(actor)                     => sendingSubscriberIsTerminated(actor, pubSub)
+    case AwaitCompleted                        => senderAwaitsCompletion(pubSub)
+    case Completed                             => sendingPublisherIsCompleted(pubSub)
+  }
+
+  def createPublisher(creationRequest: CreatePublisher[_], pubSub: PubSubManager): Unit = {
+    val publisher = context.actorOf(Props(creationRequest.createPublisher))
+    watch(publisher)
+    sender ! publisher
+    become(broadcaster(pubSub.addPublisher(publisher)))
+  }
+
+  def createSubscriber(creationRequest: CreateSubscriber, pubSub: PubSubManager): Unit = {
+    val subscriber = context.actorOf(Props(creationRequest.createSubscriber(self)))
+    sender ! subscriber
+    if (!creationRequest.isTemporary) become(broadcaster(pubSub.addSubscriber(subscriber)))
+  }
+
+  def onNext(on: OnNext, pubSub: PubSubManager): Unit = {
+    val s = sender
+    val handlerFuture = Future.sequence(privilegedHandlers.
+      map(handler => Future(handler(on.element))))
+    handlerFuture.onComplete {
+      case Success(_) =>
+        pubSub.broadcastToPublishers(on)
+        s ! CanSendNext
+      case Failure(f) =>
+        throw f
+    }
+  }
+
+  def sendingSubscriberIsTerminated(actor: ActorRef, pubSub: PubSubManager): Unit = {
+    val updated = pubSub.removePublisher(actor)
+    checkCompletionAndUpdatePubSub(updated)
+  }
+
+  def onBulkNext(bulk: Queue[_], pubSub: PubSubManager): Unit = {
+    val s = sender
+    val handlerFuture = Future.sequence(privilegedHandlers.
+      map(handler => Future(bulk.map(handler))))
+    handlerFuture.onComplete {
+      case Success(_) =>
+        pubSub.bulkBroadcastToPublishers(bulk)
+        s ! CanSendNext
+      case Failure(f) =>
+        throw f
+    }
+  }
+
+  def senderAwaitsCompletion(pubSub: PubSubManager): Unit = {
+    val updated = pubSub.awaitingCompleted(sender)
+    checkCompletionAndUpdatePubSub(updated)
+  }
+
+  def sendingPublisherIsCompleted(pubSub: PubSubManager): Unit = {
+    val updated = pubSub.removeSubscriber(sender)
+    if (updated.subscribers.isEmpty) {
+      updated.publishers.foreach(_ ! Complete)
+    }
+    checkCompletionAndUpdatePubSub(updated)
+  }
+
+  def checkCompletionAndUpdatePubSub(pubsub: PubSubManager): Unit = {
+    if (pubsub.isCompleted) {
+      pubsub.awaitingCompleted.foreach(_ ! Completed)
+      become(broadcaster(pubsub.copy(awaitingCompleted = Nil)))
+    } else {
+      become(broadcaster(pubsub))
+    }
+  }
 
   def receive: Actor.Receive = LoggingReceive {
-    case c @ CreatePublisher() =>
-      sender ! createPublisher(c)
-    case c @ CreateSubscriber(_) =>
-      sender ! createSubscriber(c)
-    case on @ OnNext(e) =>
-      val s = sender
-      val handlerFuture = Future.sequence(privilegedHandlers.
-        map(handler => Future(handler(e))))
-      handlerFuture.onComplete {
-        case Success(_) =>
-          pubSub.broadcastToPublishers(on)
-          s ! CanSendNext
-        case Failure(f) =>
-          throw f
-      }
-    case bulk: Queue[_] =>
-      val s = sender
-      val handlerFuture = Future.sequence(privilegedHandlers.
-        map(handler => Future(bulk.map(handler))))
-      handlerFuture.onComplete {
-        case Success(_) =>
-          pubSub.bulkBroadcastToPublishers(bulk)
-          s ! CanSendNext
-        case Failure(f) =>
-          throw f
-      }
-    case Terminated(actor) =>
-      log.debug(s"Removing Publisher $actor")
-      pubSub.removePublisher(actor)
-    case AwaitCompleted =>
-      pubSub.awaitingCompleted(sender)
-    case Completed =>
-      log.debug(s"Removing Subscriber $sender")
-      pubSub.removeSubscriber(sender)
-  }
-
-  def createPublisher[C](c: CreatePublisher[C]): ActorRef = {
-    val publisher = context.actorOf(Props(c.createPublisher))
-    context.watch(publisher)
-    pubSub.addPublisher(publisher)
-    publisher
-  }
-
-  def createSubscriber[C](c: CreateSubscriber): ActorRef = {
-    val subscriber = context.actorOf(Props(c.createSubscriber(self)))
-    if (!c.isTemporary) pubSub.addSubscriber(subscriber)
-    subscriber
+    // Become a broadcaster from the first message on.  
+    case anything: Any =>
+      stash()
+      unstashAll()
+      become(broadcaster(PubSubManager()))
   }
 
 }

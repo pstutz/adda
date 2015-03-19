@@ -10,11 +10,10 @@ import scala.collection.immutable.Queue
  * Subscribers are the stream sinks, from which the items to publish arrive.
  * Publishers are the stream sources, which end up publishing the items.
  */
-class PubSubManager {
-
-  private[this] var awaitingCompleted: List[ActorRef] = Nil
-  private[this] var subscribers = Set.empty[ActorRef]
-  private[this] var publishers = Set.empty[ActorRef]
+case class PubSubManager(
+  awaitingCompleted: List[ActorRef] = Nil,
+  subscribers: Set[ActorRef] = Set.empty[ActorRef],
+  publishers: Set[ActorRef] = Set.empty[ActorRef]) {
 
   def broadcastToPublishers(toBroadcast: OnNext): Unit = {
     publishers.foreach(_ ! toBroadcast)
@@ -24,37 +23,26 @@ class PubSubManager {
     publishers.foreach(_ ! bulk)
   }
 
-  def addSubscriber(subscriber: ActorRef): Unit = {
-    subscribers += subscriber
+  def addSubscriber(subscriber: ActorRef): PubSubManager = {
+    this.copy(subscribers = subscribers + subscriber)
   }
 
-  def addPublisher(publisher: ActorRef): Unit = {
-    publishers += publisher
+  def addPublisher(publisher: ActorRef): PubSubManager = {
+    this.copy(publishers = publishers + publisher)
   }
 
-  def removePublisher(publisher: ActorRef): Unit = {
-    publishers -= publisher
-    if (isCompleted) notifyCompleted()
+  def removePublisher(publisher: ActorRef): PubSubManager = {
+    this.copy(publishers = publishers - publisher)
   }
 
-  def removeSubscriber(subscriber: ActorRef): Unit = {
-    subscribers -= subscriber
-    if (subscribers.isEmpty) {
-      publishers.foreach(_ ! Complete)
-    }
-    if (isCompleted) notifyCompleted()
+  def removeSubscriber(subscriber: ActorRef): PubSubManager = {
+    this.copy(subscribers = subscribers - subscriber)
   }
 
-  def awaitingCompleted(waiting: ActorRef): Unit = {
-    awaitingCompleted ::= waiting
-    if (isCompleted) notifyCompleted()
+  def awaitingCompleted(waiting: ActorRef): PubSubManager = {
+    this.copy(awaitingCompleted = waiting :: awaitingCompleted)
   }
-
-  private[this] def isCompleted: Boolean = subscribers.isEmpty && publishers.isEmpty
-
-  private[this] def notifyCompleted(): Unit = {
-    awaitingCompleted.foreach(_ ! Completed)
-    awaitingCompleted = Nil
-  }
+  
+  def isCompleted: Boolean = subscribers.isEmpty && publishers.isEmpty
 
 }
