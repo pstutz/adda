@@ -32,7 +32,8 @@ class Adda(
   private[this] val privilegedHandlers: List[Any => Unit] = Nil,
   private[this] implicit val system: ActorSystem = ActorSystem("Adda")) extends PubSub {
 
-  var broadcasterForTopic = Map.empty[String, ActorRef]
+  private[this] var broadcasterForTopic = Map.empty[String, ActorRef]
+
   implicit val materializer = ActorFlowMaterializer()
   import system.dispatcher
   private[this] val log = Logging.getLogger(system.eventStream, "Adda")
