@@ -26,8 +26,8 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
    */
   def verifySingleSinkAndSourceFlow[C: ClassTag](l: List[C], adda: Adda): Boolean = {
     val probe = SubscriberProbe[C]
-    adda.getSource[C].to(Sink(probe)).run
-    Source(l).to(adda.getSink[C]).run
+    adda.createSource[C].to(Sink(probe)).run
+    Source(l).to(adda.createSink[C]).run
     verifyWithProbe(l, probe)
     adda.awaitCompleted
     successfulTest
@@ -83,9 +83,9 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
             val adda = new Adda
             val probeA = SubscriberProbe[String]
             val probeB = SubscriberProbe[String]
-            adda.getSource[String].to(Sink(probeA)).run
-            adda.getSource[String].to(Sink(probeB)).run
-            Source(elements).to(adda.getSink[String]).run
+            adda.createSource[String].to(Sink(probeA)).run
+            adda.createSource[String].to(Sink(probeB)).run
+            Source(elements).to(adda.createSink[String]).run
             verifyWithProbe(elements, probeA)
             verifyWithProbe(elements, probeB)
             adda.awaitCompleted
@@ -100,8 +100,8 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
         Prop.forAll(genListOfStringPublishers) {
           (sourceElements: List[List[String]]) =>
             val adda = new Adda
-            val receivedFromAdda = adda.getSource[String].runFold(Set.empty[String])(setAdditionFold)
-            val sources = sourceElements.map(Source(_).to(adda.getSink[String]))
+            val receivedFromAdda = adda.createSource[String].runFold(Set.empty[String])(setAdditionFold)
+            val sources = sourceElements.map(Source(_).to(adda.createSink[String]))
             sources.foreach(_.run)
             val expectedElementSet = sourceElements.flatten.toSet
             receivedFromAdda.onFailure { case t: Throwable => t.printStackTrace() }
@@ -119,8 +119,8 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
           (sourceElements: List[List[String]], numberOfSubscribers: Int) =>
             val adda = new Adda
             val subscriberResultSetFutures = List.fill(numberOfSubscribers)(
-              adda.getSource[String].runFold(Set.empty[String])(setAdditionFold))
-            val publishers = sourceElements.map(Source(_).to(adda.getSink[String]))
+              adda.createSource[String].runFold(Set.empty[String])(setAdditionFold))
+            val publishers = sourceElements.map(Source(_).to(adda.createSink[String]))
             publishers.foreach(_.run)
             val expectedResultSet = sourceElements.flatten.toSet
             subscriberResultSetFutures.foreach { resultSetFuture =>
@@ -137,8 +137,8 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
       val adda = new Adda
       try {
         val probe1 = SubscriberProbe[Int]
-        adda.getSource[Int].to(Sink(probe1)).run
-        Source(List(1, 2, 3)).to(adda.getSink[Int]).run
+        adda.createSource[Int].to(Sink(probe1)).run
+        Source(List(1, 2, 3)).to(adda.createSink[Int]).run
         probe1.expectSubscription().request(10)
         probe1.expectNext(1)
         probe1.expectNext(2)
@@ -146,8 +146,8 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
         probe1.expectComplete
         adda.awaitCompleted
         val probe2 = SubscriberProbe[Int]
-        adda.getSource[Int].to(Sink(probe2)).run
-        Source(List(1, 2, 3)).to(adda.getSink[Int]).run
+        adda.createSource[Int].to(Sink(probe2)).run
+        Source(List(1, 2, 3)).to(adda.createSink[Int]).run
         probe2.expectSubscription().request(10)
         probe2.expectNext(1)
         probe2.expectNext(2)
@@ -163,8 +163,8 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
       val adda = new Adda
       try {
         val probe = SubscriberProbe[Int]
-        adda.getSource[Int].take(1).to(Sink(probe)).run
-        Source(List(1, 2, 3)).to(adda.getSink[Int]).run
+        adda.createSource[Int].take(1).to(Sink(probe)).run
+        Source(List(1, 2, 3)).to(adda.createSink[Int]).run
         probe.expectSubscription().request(10)
         probe.expectNext(1)
         probe.expectComplete
@@ -179,8 +179,8 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
       try {
         adda.awaitCompleted
         val probe = SubscriberProbe[Int]
-        adda.getSource[Int].to(Sink(probe)).run
-        Source(List(1)).to(adda.getSink[Int]).run
+        adda.createSource[Int].to(Sink(probe)).run
+        Source(List(1)).to(adda.createSink[Int]).run
         probe.expectSubscription().request(10)
         probe.expectNext(1)
         probe.expectComplete

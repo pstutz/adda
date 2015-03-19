@@ -42,7 +42,7 @@ class Adda(
    * Returns an Akka Streams source that is subscribed to all published objects of class `C'.
    * Only returns exact instances of `C' and no subclasses.
    */
-  def getSource[C: ClassTag]: Source[C, Unit] = {
+  def createSource[C: ClassTag]: Source[C, Unit] = {
     val publisher = getPublisher[C]
     val source = Source(publisher)
     source
@@ -55,7 +55,7 @@ class Adda(
    * When a GraphSerializable object is streamed into this sink, then the triples of that object are
    * published to the triple store before the object is published to any of the subscribers.
    */
-  def getSink[C: ClassTag]: Sink[C, Unit] = {
+  def createSink[C: ClassTag]: Sink[C, Unit] = {
     val subscriber = getSubscriber[C]()
     val sink = Sink(subscriber)
     sink
@@ -64,10 +64,10 @@ class Adda(
   /**
    * Returns an Akka Streams sink that allows to publish objects of class `C'.
    *
-   * The difference to `getSink' is that this sink is expected to complete soon,
+   * The difference to `createSink' is that this sink is expected to complete soon,
    * and will never propagate the completion to the sources that subscribe to the class.
    */
-  def getTemporarySink[C: ClassTag]: Sink[C, Unit] = {
+  def createTemporarySink[C: ClassTag]: Sink[C, Unit] = {
     val subscriber = getSubscriber[C](isTemporary = true)
     val sink = Sink(subscriber)
     sink

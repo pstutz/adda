@@ -1,16 +1,14 @@
 package com.adda.pubsub
 
-import scala.collection.mutable
+import scala.collection.immutable.Queue
 import scala.language.postfixOps
 import scala.reflect.ClassTag
-import akka.actor.{ Actor, ActorLogging }
+
+import akka.actor.{ Actor, ActorLogging, Stash }
 import akka.event.LoggingReceive
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.{ Cancel, Request }
 import akka.stream.actor.ActorSubscriberMessage.OnNext
-import scala.collection.immutable.Queue
-import java.util.ArrayDeque
-import akka.actor.Stash
 
 final case object Complete
 
