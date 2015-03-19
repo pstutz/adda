@@ -1,50 +1,59 @@
 package com.adda.pubsub
 
-import scala.collection.mutable
-import akka.actor.{ Actor, ActorLogging, ActorRef, actorRef2Scala }
+import scala.collection.immutable.Queue
+
+import akka.actor.{ Actor, ActorLogging, ActorRef, Stash, actorRef2Scala }
 import akka.event.LoggingReceive
 import akka.stream.actor.ActorSubscriber
 import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
 import akka.stream.actor.WatermarkRequestStrategy
-import scala.collection.immutable.Queue
 
 class AddaSink(
   val isTemporary: Boolean,
-  val broadcaster: ActorRef) extends ActorSubscriber with ActorLogging {
+  val broadcaster: ActorRef) extends ActorSubscriber with ActorLogging with Stash {
+
+  import context.become
+  val emptyQueue = Queue.empty[Any]
 
   val requestStrategy = WatermarkRequestStrategy(50)
-  var bulkMessage = Queue.empty[Any]
-  var canSendNext = true
-  var shouldComplete = false
+
+  /**
+   * Receive function that queues received elements whilst waiting for `CanSendNext'.
+   */
+  def queuing(
+    queued: Queue[Any] = emptyQueue): Actor.Receive = LoggingReceive {
+    case n @ OnNext(e) =>
+      context.become(queuing(queued.enqueue(e)))
+    case CanSendNext =>
+      if (queued.isEmpty) {
+        unstashAll()
+        context.become(receive)
+      } else {
+        broadcaster ! queued
+        become(queuing(emptyQueue))
+      }
+    case OnComplete =>
+      stash()
+    case OnError(e) =>
+      handleError(e)
+  }
 
   def receive: Actor.Receive = LoggingReceive {
     case n @ OnNext(e) =>
-      if (canSendNext) {
-        broadcaster ! n
-        canSendNext = false
-      } else {
-        bulkMessage = bulkMessage.enqueue(e)
-      }
+      broadcaster ! n
+      become(queuing(emptyQueue))
     case CanSendNext =>
-      if (bulkMessage.isEmpty) {
-        canSendNext = true
-        if (shouldComplete) complete
-      } else {
-        broadcaster ! bulkMessage
-        bulkMessage = Queue.empty[Any]
-      }
+      throw new Exception("AddaSink received CanSendNext, but was in queuing mode.")
     case OnComplete =>
-      shouldComplete = true
-      log.debug(s"$this OnComplete")
-      if (bulkMessage.isEmpty && canSendNext) complete
+      if (!isTemporary) broadcaster ! Completed
+      context.stop(self)
     case OnError(e) =>
-      log.error(e, s"Adda sink received error ${e.getMessage} from $sender")
-      e.printStackTrace
+      handleError(e)
   }
 
-  def complete(): Unit = {
-    if (!isTemporary) broadcaster ! Completed
-    context.stop(self)
+  def handleError(e: Throwable): Unit = {
+    log.error(e, s"Adda sink received error ${e.getMessage} from $sender")
+    e.printStackTrace
   }
 
 }
