@@ -89,9 +89,10 @@ class Adda(
    * Blocking call that shuts down Adda and returns when the shutdown is completed.
    */
   def shutdown(): Unit = {
-    log.warning("Shutting down Adda")
+    log.debug("Shutting down Adda ...")
     system.shutdown()
     system.awaitTermination()
+    log.debug("Adda has shut down.")
   }
 
   private[this] def topic[C: ClassTag]: String = {
