@@ -1,12 +1,12 @@
 package com.adda.examples
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 
 import com.adda.Adda
 
 import akka.actor.ActorSystem
 import akka.stream.ActorFlowMaterializer
-import akka.stream.scaladsl.{Flow, Sink, Source}
+import akka.stream.scaladsl.{ Flow, Sink, Source }
 import akka.stream.testkit.StreamTestKit
 
 /**
@@ -24,22 +24,21 @@ class CharFlowTest extends FlatSpec with Matchers {
       f.toUpper
     })
 
-    val pub = adda.getSource[Char]
+    val probe = StreamTestKit.SubscriberProbe[Char]
 
-    Source(List('a','d','d','a'))
+    adda.getSource[Char].via(lowerCaseToUpperFlow).to(Sink(probe)).run()
+    Source(List('a', 'd', 'd', 'a'))
       .runWith(adda.getSink[Char])
 
-    val probe = StreamTestKit.SubscriberProbe[Char]
-    pub.via(lowerCaseToUpperFlow).to(Sink(probe)).run()
     probe.expectSubscription().request(4)
     probe.expectNext('A')
     probe.expectNext('D')
     probe.expectNext('D')
     probe.expectNext('A')
-    
-    adda.shutdown()
-    
     probe.expectComplete()
+
+    adda.awaitCompleted()
+    adda.shutdown()
 
   }
 }
