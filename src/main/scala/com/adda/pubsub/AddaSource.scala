@@ -10,39 +10,71 @@ import akka.stream.actor.ActorPublisherMessage.{ Cancel, Request }
 import akka.stream.actor.ActorSubscriberMessage.OnNext
 import scala.collection.immutable.Queue
 import java.util.ArrayDeque
+import akka.actor.Stash
 
 final case object Complete
 
-class AddaSource[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
+class AddaSource[C: ClassTag] extends ActorPublisher[C] with ActorLogging with Stash {
 
-  val queue = new ArrayDeque[C]()
-  var completeReceived = false
+  import context._
+
+  val emptyQueue = Queue.empty[C]
+
+  /**
+   * Queuing mode that is enabled when the total demand is 0.
+   */
+  def queuing(queued: Queue[C]): Actor.Receive = LoggingReceive {
+    case OnNext(e: C) =>
+      become(queuing(queued.enqueue(e)))
+    case q: Queue[C] =>
+      become(queuing(queued.enqueue(q)))
+    case Request(cnt) =>
+      val remaining = deliverFromQueue(queued)
+      if (remaining == emptyQueue) {
+        unstashAll()
+        become(receive)
+      } else {
+        become(queuing(remaining))
+      }
+    case Complete =>
+      stash()
+    case Cancel =>
+      stop(self)
+  }
 
   def receive: Actor.Receive = LoggingReceive {
     case OnNext(e: C) =>
-      queue.addLast(e)
-      if (isActive) publishNext()
-    case bulk: Queue[C] =>
-      for (e <- bulk) queue.addLast(e)
-      if (isActive) publishNext()
+      if (totalDemand > 0) {
+        onNext(e)
+      } else {
+        become(queuing(Queue(e)))
+      }
+    case q: Queue[C] =>
+      val remaining = deliverFromQueue(q)
+      if (remaining != emptyQueue) {
+        become(queuing(remaining))
+      }
     case Request(cnt) =>
-      publishNext()
     case Complete =>
-      completeReceived = true
-      log.debug(s"$this Complete")
-      if (isActive) publishNext()
+      onComplete()
+      stop(self)
     case Cancel =>
-      context.stop(self)
+      stop(self)
   }
 
-  def publishNext(): Unit = {
-    while (totalDemand > 0 && !queue.isEmpty) {
-      val next = queue.removeFirst
-      onNext(next)
-    }
-    if (completeReceived && queue.isEmpty) {
-      onComplete()
-      context.stop(self)
+  /**
+   * Delivers from `q' whatever it can, then returns a queue with the remaining items.
+   */
+  def deliverFromQueue(q: Queue[C]): Queue[C] = {
+    if (totalDemand >= q.size) {
+      q.foreach(onNext(_))
+      emptyQueue
+    } else if (totalDemand == 0) {
+      q
+    } else {
+      val (toDeliver, remaining) = q.splitAt(totalDemand.toInt)
+      toDeliver.foreach(onNext(_))
+      remaining
     }
   }
 
