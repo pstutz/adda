@@ -1,33 +1,34 @@
 package com.adda
 
 import org.scalacheck.Gen
+import org.scalacheck.Arbitrary
 
 object Generators {
 
-  val (minSubscriberCount, maxSubscriberCount) = (0, 10000)
+  /**
+   * Limit maximum number of tested publishers.
+   */
+  val maxPublisherCount = 20
 
   /**
-   * Bias subscriber count frequency towards small numbers.
+   * Limit maximum number of elements per publisher.
    */
-  val subscriberCountFrequencies = for {
-    (numberOfSubscribers, index) <- (minSubscriberCount to maxSubscriberCount).zipWithIndex
-    frequency = (numberOfSubscribers * maxSubscriberCount*maxSubscriberCount) / (index*index + 1)
-  } yield frequency -> Gen.const(numberOfSubscribers)
+  val maxElementCount = 20
 
   /**
-   * Limit maximum number of tested sinks to 10000.
+   * Limit maximum number of tested subscribers.
    */
-  val genSubscriberCount = Gen.frequency(subscriberCountFrequencies: _*)
+  val genSubscriberCount = Gen.choose(0, 20)
 
   /**
    * Generates a list of alphanumeric strings that can be published.
    */
-  val genPublishableStrings = Gen.listOf(Gen.alphaStr)
+  val genStringPublisher = Gen.resize(maxElementCount, Gen.listOf(Gen.alphaStr))
 
   /**
    * Only test with one or more string publishers. If none are ever added,
    * then the stream is not completed.
    */
-  val genListOfPublishableStrings = Gen.nonEmptyListOf(genPublishableStrings)
+  val genListOfStringPublishers = Gen.resize(maxPublisherCount, Gen.nonEmptyListOf(genStringPublisher))
 
 }

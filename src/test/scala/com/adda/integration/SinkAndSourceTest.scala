@@ -10,7 +10,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.Checkers
 
 import com.adda.Adda
-import com.adda.Generators.{ genListOfPublishableStrings, genPublishableStrings, genSubscriberCount }
+import com.adda.Generators._
 import com.adda.TestingConstants.{ probeMinItemsRequested, successfulTest }
 
 import akka.stream.ActorFlowMaterializer
@@ -50,72 +50,87 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
   "Adda" should {
 
     "support single-publisher/single-subscriber pubsub for strings" in {
-      val adda = new Adda
-      check((elements: List[String]) => verifySingleSinkAndSourceFlow(elements, adda))
-      adda.shutdown
+      check { (elements: List[String]) =>
+        val adda = new Adda
+        verifySingleSinkAndSourceFlow(elements, adda)
+        adda.shutdown
+        successfulTest
+      }
     }
 
     "support single-publisher/single-subscriber pubsub for ints" in {
-      val adda = new Adda
-      check((elements: List[Int]) => verifySingleSinkAndSourceFlow(elements, adda))
-      adda.shutdown
+      check { (elements: List[Int]) =>
+        val adda = new Adda
+        verifySingleSinkAndSourceFlow(elements, adda)
+        adda.shutdown
+        successfulTest
+      }
     }
 
     "support single-publisher/single-subscriber pubsub for double" in {
-      val adda = new Adda
-      check((elements: List[Double]) => verifySingleSinkAndSourceFlow(elements, adda))
-      adda.shutdown
+      check { (elements: List[Double]) =>
+        val adda = new Adda
+        verifySingleSinkAndSourceFlow(elements, adda)
+        adda.shutdown
+        successfulTest
+      }
     }
 
     "support single-publisher/multiple-subscribers pubsub for strings" in {
-      val adda = new Adda
-      check(Prop.forAll(genPublishableStrings, genSubscriberCount) {
-        (elements: List[String], numberOfSubscribers: Int) =>
-          val probeA = SubscriberProbe[String]
-          val probeB = SubscriberProbe[String]
-          adda.getSource[String].to(Sink(probeA)).run
-          adda.getSource[String].to(Sink(probeB)).run
-          Source(elements).to(adda.getSink[String]).run
-          verifyWithProbe(elements, probeA)
-          verifyWithProbe(elements, probeB)
-          adda.awaitCompleted
-          successfulTest
-      })
-      adda.shutdown
+      check {
+        Prop.forAll(genStringPublisher, genSubscriberCount) {
+          (elements: List[String], numberOfSubscribers: Int) =>
+            val adda = new Adda
+            val probeA = SubscriberProbe[String]
+            val probeB = SubscriberProbe[String]
+            adda.getSource[String].to(Sink(probeA)).run
+            adda.getSource[String].to(Sink(probeB)).run
+            Source(elements).to(adda.getSink[String]).run
+            verifyWithProbe(elements, probeA)
+            verifyWithProbe(elements, probeB)
+            adda.awaitCompleted
+            adda.shutdown
+            successfulTest
+        }
+      }
     }
 
     "support multiple-publishers/single-subscriber pubsub for strings" in {
-      val adda = new Adda
-      check(Prop.forAll(genListOfPublishableStrings) {
-        (sourceElements: List[List[String]]) =>
-          val receivedFromAdda = adda.getSource[String].runFold(Set.empty[String])(setAdditionFold)
-          val sources = sourceElements.map(Source(_).to(adda.getSink[String]))
-          sources.foreach(_.run)
-          val expectedElementSet = sourceElements.flatten.toSet
-          receivedFromAdda.onFailure { case t: Throwable => t.printStackTrace() }
-          whenReady(receivedFromAdda)(_ should be(expectedElementSet))
-          adda.awaitCompleted
-          successfulTest
-      })
-      adda.shutdown
+      check {
+        Prop.forAll(genListOfStringPublishers) {
+          (sourceElements: List[List[String]]) =>
+            val adda = new Adda
+            val receivedFromAdda = adda.getSource[String].runFold(Set.empty[String])(setAdditionFold)
+            val sources = sourceElements.map(Source(_).to(adda.getSink[String]))
+            sources.foreach(_.run)
+            val expectedElementSet = sourceElements.flatten.toSet
+            receivedFromAdda.onFailure { case t: Throwable => t.printStackTrace() }
+            whenReady(receivedFromAdda)(_ should be(expectedElementSet))
+            adda.awaitCompleted
+            adda.shutdown
+            successfulTest
+        }
+      }
     }
 
     "support multiple-publishers/multiple-subscribers pubsub for strings" in {
-      val adda = new Adda
-      check(Prop.forAll(genListOfPublishableStrings, genSubscriberCount) {
-        (sourceElements: List[List[String]], numberOfSubscribers: Int) =>
-          val subscriberResultSetFutures = List.fill(numberOfSubscribers)(
-            adda.getSource[String].runFold(Set.empty[String])(setAdditionFold))
-          val publishers = sourceElements.map(Source(_).to(adda.getSink[String]))
-          publishers.foreach(_.run)
-          val expectedResultSet = sourceElements.flatten.toSet
-          subscriberResultSetFutures.foreach { resultSetFuture =>
-            whenReady(resultSetFuture)(_ should be(expectedResultSet))
-          }
-          adda.awaitCompleted
-          successfulTest
-      })
-      adda.shutdown
+      check {
+        Prop.forAll(genListOfStringPublishers, genSubscriberCount) {
+          (sourceElements: List[List[String]], numberOfSubscribers: Int) =>
+            val adda = new Adda
+            val subscriberResultSetFutures = List.fill(numberOfSubscribers)(
+              adda.getSource[String].runFold(Set.empty[String])(setAdditionFold))
+            val publishers = sourceElements.map(Source(_).to(adda.getSink[String]))
+            publishers.foreach(_.run)
+            val expectedResultSet = sourceElements.flatten.toSet
+            subscriberResultSetFutures.foreach { resultSetFuture =>
+              whenReady(resultSetFuture)(_ should be(expectedResultSet))
+            }
+            adda.awaitCompleted
+            adda.shutdown
+            successfulTest
+        }
+      }
     }
 
     "support waiting for completion repeatedly" in {
