@@ -14,8 +14,8 @@ class BulkPublishingTest extends FlatSpec with Matchers {
   "Adda" should "deliver bulked messages in the correct order" in {
 
     val adda = new Adda
-    implicit val system = ActorSystem("Test")
-    implicit val materializer = ActorFlowMaterializer()
+    implicit val system = adda.system 
+    implicit val materializer = adda.materializer
 
     val elements = 1000000
 

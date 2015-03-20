@@ -32,7 +32,7 @@ import akka.util.Timeout
  */
 class Adda(
   private[this] val privilegedHandlers: List[Any => Unit] = Nil,
-  private[this] implicit val system: ActorSystem = ActorSystem(Adda.defaultSystemName)) extends PubSub {
+  implicit val system: ActorSystem = ActorSystem(Adda.defaultSystemName)) extends PubSub {
 
   private[this] var broadcasterForTopic = Map.empty[String, ActorRef]
 
