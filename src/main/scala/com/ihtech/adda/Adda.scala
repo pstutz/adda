@@ -40,44 +40,23 @@ class Adda(
   implicit val executor = system.dispatcher
   private[this] val log = Logging.getLogger(system.eventStream, Adda.defaultSystemName)
 
-  /**
-   * Returns an Akka Streams source that is subscribed to all published objects of class `C'.
-   * Only returns exact instances of `C' and no subclasses.
-   */
   def subscribe[C: ClassTag]: Source[C, Unit] = {
     val publisher = createPublisher[C]
     val source = Source(publisher)
     source
   }
 
-  /**
-   * Returns an Akka Streams sink that allows to publish objects of class `C'.
-   *
-   * The `trackCompletion' parameter determines if the pubsub system should track the completion of this publisher.
-   *
-   * The pubsub system completes all subscribers for a topic, when the number of tracked publishers
-   * for this class was > 0, and then falls back to 0.
-   */
   def publish[C: ClassTag](trackCompletion: Boolean = true): Sink[C, Unit] = {
     val subscriber = createSubscriber[C](trackCompletion)
     val sink = Sink(subscriber)
     sink
   }
 
-  /**
-   * Blocking call that returns once all the publishers and subscribers have completed.
-   *
-   * The pubsub system completes all subscribers for a topic, when the number of tracked publishers
-   * for this class was > 0, and then falls back to 0.
-   */
   def awaitCompleted(implicit timeout: Timeout = Timeout(300.seconds)): Unit = {
     val completedFuture = Future.sequence(broadcasterForTopic.values.map(b => b ? AwaitCompleted))
     Await.result(completedFuture, timeout.duration)
   }
 
-  /**
-   * Blocking call that shuts down Adda and returns when the shutdown is completed.
-   */
   def shutdown(): Unit = {
     log.debug("Shutting down Adda ...")
     system.shutdown()
