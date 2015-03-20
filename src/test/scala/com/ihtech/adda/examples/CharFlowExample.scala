@@ -27,7 +27,7 @@ class CharFlowExample extends FlatSpec with Matchers with Checkers {
       probes.foreach(verifyWithProbe(chars, _))
       adda.awaitCompleted()
       adda.shutdown()
-      true // Check requires for the return value to be a boolean. 
+      true // Check requires for the return value to be a boolean.
     }
   }
 
