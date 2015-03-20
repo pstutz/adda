@@ -1,8 +1,7 @@
 package com.ihtech.adda.examples
 
 import akka.stream.{ ActorFlowMaterializer, ActorFlowMaterializerSettings }
-import akka.stream.scaladsl.{ Flow, FlowGraph }
-import akka.stream.scaladsl.{ Sink, Source }
+import akka.stream.scaladsl.{ Flow, FlowGraph, Sink, Source }
 import akka.stream.scaladsl.FlowGraph.Implicits.SourceArrow
 import akka.stream.testkit.AkkaSpec
 import akka.stream.testkit.StreamTestKit.SubscriberProbe
