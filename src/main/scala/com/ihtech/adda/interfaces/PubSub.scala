@@ -9,12 +9,12 @@ import akka.util.Timeout
 trait PubSub {
 
   /**
-   * Returns an Akka Streams source that is subscribed to all published objects of class `C'.
+   * Returns an Akka Streams source that is subscribed to objects that are published to sinks of type `C'.
    */
   def subscribe[C: ClassTag]: Source[C, Unit]
 
   /**
-   * Returns an Akka Streams sink that allows to publish objects of class `C'.
+   * Returns an Akka Streams sink that allows to publish objects of type `C'.
    *
    * The pubsub system tracks completion for this publisher and completes all subscribers for a topic,
    * when the number of tracked publishers for this class was > 0, and then falls back to 0.
@@ -22,7 +22,7 @@ trait PubSub {
   def publish[C: ClassTag]: Sink[C, Unit] = publish[C](trackCompletion = true)
 
   /**
-   * Returns an Akka Streams sink that allows to publish objects of class `C'.
+   * Returns an Akka Streams sink that allows to publish objects of type `C'.
    *
    * The `trackCompletion' parameter determines if the pubsub system should track the completion of this publisher.
    *
