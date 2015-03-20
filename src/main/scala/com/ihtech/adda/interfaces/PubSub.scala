@@ -6,6 +6,15 @@ import scala.reflect.ClassTag
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.util.Timeout
 
+/**
+ * An interface that allows to connect Akka Streams with Pub/Sub sinks and sources.
+ *
+ * All messages routed into a sink for a type have to be of the correct type.
+ * The published messages are routed to all the sources that subscribed the this type.
+ *
+ * Completion of publishers is tracked and all subscribers for a type are completed
+ * when the number of tracked publishers for a type was > 0, and then falls back to 0.
+ */
 trait PubSub {
 
   /**
@@ -16,8 +25,8 @@ trait PubSub {
   /**
    * Returns an Akka Streams sink that allows to publish objects of type `C'.
    *
-   * The pubsub system tracks completion for this publisher and completes all subscribers for a topic,
-   * when the number of tracked publishers for this class was > 0, and then falls back to 0.
+   * The pubsub system tracks completion for this publisher and completes all subscribers for a type,
+   * when the number of tracked publishers for this type was > 0, and then falls back to 0.
    */
   def publish[C: ClassTag]: Sink[C, Unit] = publish[C](trackCompletion = true)
 
@@ -26,16 +35,16 @@ trait PubSub {
    *
    * The `trackCompletion' parameter determines if the pubsub system should track the completion of this publisher.
    *
-   * The pubsub system completes all subscribers for a topic, when the number of tracked publishers
-   * for this class was > 0, and then falls back to 0.
+   * The pubsub system completes all subscribers for a type, when the number of tracked publishers
+   * for this type was > 0, and then falls back to 0.
    */
   def publish[C: ClassTag](trackCompletion: Boolean): Sink[C, Unit]
 
   /**
    * Blocking call that returns once all the publishers and subscribers have completed.
    *
-   * The pubsub system completes all subscribers for a topic, when the number of tracked publishers
-   * for this class was > 0, and then falls back to 0.
+   * The pubsub system completes all subscribers for a type, when the number of tracked publishers
+   * for this type was > 0, and then falls back to 0.
    */
   def awaitCompleted(implicit timeout: Timeout = Timeout(300.seconds)): Unit
 
