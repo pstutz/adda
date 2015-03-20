@@ -15,7 +15,7 @@ import akka.stream.testkit.StreamTestKit.SubscriberProbe
  */
 class CharFlowExample extends FlatSpec with Matchers with Checkers {
 
-  "Adda" should "streaming some charactes from a source to two sinks" in {
+  "Adda" should "stream some charactes from a source to two sinks" in {
 
     check { (chars: List[Char]) =>
       val adda = new Adda
