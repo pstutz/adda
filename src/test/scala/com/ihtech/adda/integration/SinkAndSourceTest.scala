@@ -162,7 +162,7 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
             val probe = SubscriberProbe[String]
             adda.subscribe[String].take(1).to(Sink(probe)).run
             Source(strings).to(adda.publish[String]).run
-            verifyWithProbe(List(strings.head), probe)
+            verifyWithProbe(strings.take(1), probe)
             adda.awaitCompleted
             adda.shutdown
             successfulTest
@@ -177,9 +177,9 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
             val adda = new Adda
             adda.awaitCompleted
             val probe = SubscriberProbe[String]
-            adda.subscribe[String].take(1).to(Sink(probe)).run
+            adda.subscribe[String].to(Sink(probe)).run
             Source(strings).to(adda.publish[String]).run
-            verifyWithProbe(strings.take(1), probe)
+            verifyWithProbe(strings, probe)
             adda.awaitCompleted
             adda.shutdown
             successfulTest
