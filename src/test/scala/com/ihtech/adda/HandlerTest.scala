@@ -1,4 +1,4 @@
-package com.adda
+package com.ihtech.adda
 
 import java.util.concurrent.atomic.AtomicInteger
 

@@ -1,9 +1,9 @@
-package com.adda
+package com.ihtech.adda
 
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
+
+import akka.stream.scaladsl.{ Sink, Source }
 
 object ThroughputTest extends App {
 

@@ -1,4 +1,4 @@
-package com.adda.pubsub
+package com.ihtech.adda.pubsub
 
 import scala.collection.immutable.Queue
 import scala.concurrent.Future

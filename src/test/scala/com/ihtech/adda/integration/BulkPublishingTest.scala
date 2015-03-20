@@ -1,8 +1,8 @@
-package com.adda.integration
+package com.ihtech.adda.integration
 
 import org.scalatest.{ FlatSpec, Matchers }
 
-import com.adda.Adda
+import com.ihtech.adda.Adda
 
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.testkit.StreamTestKit
@@ -29,4 +29,5 @@ class BulkPublishingTest extends FlatSpec with Matchers {
     adda.awaitCompleted()
     adda.shutdown()
   }
+
 }

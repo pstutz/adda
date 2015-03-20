@@ -1,4 +1,4 @@
-package com.adda.interfaces
+package com.ihtech.adda.interfaces
 
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag

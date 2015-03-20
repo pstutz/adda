@@ -1,17 +1,14 @@
-package com.adda.examples
+package com.ihtech.adda.examples
 
 import org.scalatest.{ FlatSpec, Matchers }
 
-import com.adda.Adda
+import com.ihtech.adda.Adda
 
 import akka.actor.ActorSystem
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.{ Flow, Sink, Source }
 import akka.stream.testkit.StreamTestKit
 
-/**
- * Created by jahangirmohammed on 2/11/15.
- */
 class CharFlowTest extends FlatSpec with Matchers {
 
   "Adda" should "take a source of lower case characters and convert them into upper case characters" in {

@@ -1,11 +1,8 @@
-package com.adda.examples
+package com.ihtech.adda.examples
 
-import akka.stream.ActorFlowMaterializer
-import akka.stream.ActorFlowMaterializerSettings
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.stream.testkit.AkkaSpec
-import akka.stream.testkit.StreamTestKit
+import akka.stream.{ ActorFlowMaterializer, ActorFlowMaterializerSettings }
+import akka.stream.scaladsl.{ Sink, Source }
+import akka.stream.testkit.{ AkkaSpec, StreamTestKit }
 
 class SimpleSourceTest extends AkkaSpec {
   val settings = ActorFlowMaterializerSettings(system)

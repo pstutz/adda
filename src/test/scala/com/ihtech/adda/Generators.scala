@@ -1,7 +1,6 @@
-package com.adda
+package com.ihtech.adda
 
 import org.scalacheck.Gen
-import org.scalacheck.Arbitrary
 
 object Generators {
 

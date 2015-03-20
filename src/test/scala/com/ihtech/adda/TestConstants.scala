@@ -1,6 +1,6 @@
-package com.adda
+package com.ihtech.adda
 
-object TestingConstants {
+object TestConstants {
 
   val probeMinItemsRequested = 1
 

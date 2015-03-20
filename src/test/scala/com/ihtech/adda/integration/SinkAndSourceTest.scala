@@ -1,4 +1,4 @@
-package com.adda.integration
+package com.ihtech.adda.integration
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect.ClassTag
@@ -9,9 +9,9 @@ import org.scalacheck.Prop.propBoolean
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.Checkers
 
-import com.adda.Adda
-import com.adda.Generators._
-import com.adda.TestingConstants.{ probeMinItemsRequested, successfulTest }
+import com.ihtech.adda.Adda
+import com.ihtech.adda.Generators.{ genListOfStringPublishers, genStringPublisher, genSubscriberCount }
+import com.ihtech.adda.TestConstants.{ probeMinItemsRequested, successfulTest }
 
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.{ Sink, Source }
