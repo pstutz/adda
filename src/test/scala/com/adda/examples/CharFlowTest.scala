@@ -26,9 +26,9 @@ class CharFlowTest extends FlatSpec with Matchers {
 
     val probe = StreamTestKit.SubscriberProbe[Char]
 
-    adda.createSource[Char].via(lowerCaseToUpperFlow).to(Sink(probe)).run()
+    adda.subscribe[Char].via(lowerCaseToUpperFlow).to(Sink(probe)).run()
     Source(List('a', 'd', 'd', 'a'))
-      .runWith(adda.createSink[Char])
+      .runWith(adda.publish[Char])
 
     probe.expectSubscription().request(4)
     probe.expectNext('A')

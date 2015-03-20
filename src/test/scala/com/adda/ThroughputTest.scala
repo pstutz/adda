@@ -13,8 +13,8 @@ object ThroughputTest extends App {
 
   val elements = 10000000
   val startTime = System.currentTimeMillis
-  val processed = adda.createSource[Int].runWith(messageCountingSink)
-  Source(1 to elements).to(adda.createSink[Int]).run
+  val processed = adda.subscribe[Int].runWith(messageCountingSink)
+  Source(1 to elements).to(adda.publish[Int]).run
   val actualProcessed = Await.result(processed, 10000.seconds)
   val finishTime = System.currentTimeMillis
   val delta = finishTime - startTime

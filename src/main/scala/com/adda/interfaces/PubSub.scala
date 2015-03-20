@@ -11,29 +11,33 @@ trait PubSub {
   /**
    * Returns an Akka Streams source that is subscribed to all published objects of class `C'.
    */
-  def createSource[C: ClassTag]: Source[C, Unit]
-
-  /**
-   * Returns an Akka Streams sink that allows to publish objects of class `C'.
-   */
-  def createSink[C: ClassTag]: Sink[C, Unit]
+  def subscribe[C: ClassTag]: Source[C, Unit]
 
   /**
    * Returns an Akka Streams sink that allows to publish objects of class `C'.
    *
-   * The difference to `createSink' is that this sink is expected to complete soon,
-   * and will never propagate the completion to the sources that subscribe to the class.
+   * The pubsub system tracks completion for this publisher and completes all subscribers for a topic,
+   * when the number of tracked publishers for this class was > 0, and then falls back to 0.
    */
-  def createTemporarySink[C: ClassTag]: Sink[C, Unit]
+  def publish[C: ClassTag]: Sink[C, Unit] = publish[C](trackCompletion = true)
 
   /**
-   * Blocking call that returns once all the incoming sinks have completed and all the sources
-   * have published the remaining items.
+   * Returns an Akka Streams sink that allows to publish objects of class `C'.
    *
-   * Adda automatically completes all sources for a class, when the number of active sinks
+   * The `trackCompletion' parameter determines if the pubsub system should track the completion of this publisher.
+   *
+   * The pubsub system completes all subscribers for a topic, when the number of tracked publishers
    * for this class was > 0, and then falls back to 0.
    */
-  def awaitCompleted()(implicit timeout: Timeout = Timeout(60.seconds)): Unit
+  def publish[C: ClassTag](trackCompletion: Boolean): Sink[C, Unit]
+
+  /**
+   * Blocking call that returns once all the publishers and subscribers have completed.
+   *
+   * The pubsub system completes all subscribers for a topic, when the number of tracked publishers
+   * for this class was > 0, and then falls back to 0.
+   */
+  def awaitCompleted(implicit timeout: Timeout = Timeout(300.seconds)): Unit
 
   /**
    * Blocking call that shuts down the pub/sub infrastructure and returns when the shutdown is completed.

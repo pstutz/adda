@@ -14,7 +14,7 @@ object FlowControl {
 }
 
 class AddaSink(
-  val isTemporary: Boolean,
+  val trackCompletion: Boolean,
   val broadcaster: ActorRef) extends ActorSubscriber with ActorLogging with Stash {
 
   private[this] val emptyQueue = Queue.empty[Any]
@@ -48,7 +48,7 @@ class AddaSink(
     case CanSendNext =>
       throw new Exception("AddaSink received CanSendNext, but was in queuing mode.")
     case OnComplete =>
-      if (!isTemporary) broadcaster ! Completed
+      if (trackCompletion) broadcaster ! Completed
       context.stop(self)
     case OnError(e) =>
       handleError(e)

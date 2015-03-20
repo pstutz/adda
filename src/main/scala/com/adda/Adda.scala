@@ -34,7 +34,7 @@ class Adda(
   private[this] val privilegedHandlers: List[Any => Unit] = Nil,
   implicit val system: ActorSystem = ActorSystem(Adda.defaultSystemName)) extends PubSub {
 
-  private[this] var broadcasterForTopic = Map.empty[String, ActorRef]
+  private[this] val broadcasterForTopic = collection.mutable.Map.empty[String, ActorRef]
 
   implicit val materializer = ActorFlowMaterializer()
   implicit val executor = system.dispatcher
@@ -44,7 +44,7 @@ class Adda(
    * Returns an Akka Streams source that is subscribed to all published objects of class `C'.
    * Only returns exact instances of `C' and no subclasses.
    */
-  def createSource[C: ClassTag]: Source[C, Unit] = {
+  def subscribe[C: ClassTag]: Source[C, Unit] = {
     val publisher = createPublisher[C]
     val source = Source(publisher)
     source
@@ -52,37 +52,25 @@ class Adda(
 
   /**
    * Returns an Akka Streams sink that allows to publish objects of class `C'.
-   * Only allows to publish exact instances of `C' and no subclasses.
    *
-   * When a GraphSerializable object is streamed into this sink, then the triples of that object are
-   * published to the triple store before the object is published to any of the subscribers.
-   */
-  def createSink[C: ClassTag]: Sink[C, Unit] = {
-    val subscriber = createSubscriber[C]()
-    val sink = Sink(subscriber)
-    sink
-  }
-
-  /**
-   * Returns an Akka Streams sink that allows to publish objects of class `C'.
+   * The `trackCompletion' parameter determines if the pubsub system should track the completion of this publisher.
    *
-   * The difference to `createSink' is that this sink is expected to complete soon,
-   * and will never propagate the completion to the sources that subscribe to the class.
-   */
-  def createTemporarySink[C: ClassTag]: Sink[C, Unit] = {
-    val subscriber = createSubscriber[C](isTemporary = true)
-    val sink = Sink(subscriber)
-    sink
-  }
-
-  /**
-   * Blocking call that returns once all the incoming sinks have completed and all the sources
-   * have published the remaining items.
-   *
-   * Adda automatically completes all sources for a class, when the number of active sinks
+   * The pubsub system completes all subscribers for a topic, when the number of tracked publishers
    * for this class was > 0, and then falls back to 0.
    */
-  def awaitCompleted()(implicit timeout: Timeout = Timeout(60.seconds)): Unit = {
+  def publish[C: ClassTag](trackCompletion: Boolean = true): Sink[C, Unit] = {
+    val subscriber = createSubscriber[C](trackCompletion)
+    val sink = Sink(subscriber)
+    sink
+  }
+
+  /**
+   * Blocking call that returns once all the publishers and subscribers have completed.
+   *
+   * The pubsub system completes all subscribers for a topic, when the number of tracked publishers
+   * for this class was > 0, and then falls back to 0.
+   */
+  def awaitCompleted(implicit timeout: Timeout = Timeout(300.seconds)): Unit = {
     val completedFuture = Future.sequence(broadcasterForTopic.values.map(b => b ? AwaitCompleted))
     Await.result(completedFuture, timeout.duration)
   }
@@ -123,11 +111,11 @@ class Adda(
     Await.result(publisherFuture, 5.seconds)
   }
 
-  private[this] def createSubscriber[C: ClassTag](isTemporary: Boolean = false): Subscriber[C] = {
+  private[this] def createSubscriber[C: ClassTag](trackCompletion: Boolean): Subscriber[C] = {
     implicit val timeout = Timeout(5.seconds)
     val t = topic[C]
     val b = broadcaster(t)
-    val subscriberActorFuture = b ? CreateSubscriber(isTemporary)
+    val subscriberActorFuture = b ? CreateSubscriber(trackCompletion)
     val subscriberFuture = subscriberActorFuture.map(s => ActorSubscriber[C](s.asInstanceOf[ActorRef]))
     Await.result(subscriberFuture, 5.seconds)
   }

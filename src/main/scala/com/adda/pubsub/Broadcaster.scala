@@ -23,8 +23,8 @@ final case class CreatePublisher[C: ClassTag]() {
   val className = implicitly[ClassTag[C]].runtimeClass.getName
 }
 
-final case class CreateSubscriber(isTemporary: Boolean) {
-  def createSubscriber(broadcaster: ActorRef): AddaSink = new AddaSink(isTemporary, broadcaster)
+final case class CreateSubscriber(trackCompletion: Boolean) {
+  def createSubscriber(broadcaster: ActorRef): AddaSink = new AddaSink(trackCompletion, broadcaster)
 }
 
 /**
@@ -59,7 +59,7 @@ class Broadcaster(
   def createSubscriber(creationRequest: CreateSubscriber, pubSub: PubSubManager): Unit = {
     val subscriber = context.actorOf(Props(creationRequest.createSubscriber(self)))
     sender ! subscriber
-    if (!creationRequest.isTemporary) context.become(broadcaster(pubSub.addSubscriber(subscriber)))
+    if (creationRequest.trackCompletion) context.become(broadcaster(pubSub.addSubscriber(subscriber)))
   }
 
   def onNext(on: OnNext, pubSub: PubSubManager): Unit = {

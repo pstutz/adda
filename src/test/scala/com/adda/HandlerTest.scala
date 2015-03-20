@@ -28,8 +28,8 @@ class HandlerTest extends FlatSpec with Matchers {
     val elements = 1000000
 
     val probe = StreamTestKit.SubscriberProbe[Int]
-    val in = Source(1 to elements).to(adda.createSink[Int])
-    val out = adda.createSource[Int].to(Sink(probe))
+    val in = Source(1 to elements).to(adda.publish[Int])
+    val out = adda.subscribe[Int].to(Sink(probe))
     out.run
     in.run
 

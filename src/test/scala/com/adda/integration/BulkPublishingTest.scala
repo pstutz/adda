@@ -18,10 +18,8 @@ class BulkPublishingTest extends FlatSpec with Matchers {
     val ascendingInts = 1 to maxElements
 
     val probe = StreamTestKit.SubscriberProbe[Int]
-    val in = Source(ascendingInts).to(adda.createSink[Int])
-    val out = adda.createSource[Int].to(Sink(probe))
-    out.run
-    in.run
+    adda.subscribe[Int].to(Sink(probe)).run
+    Source(ascendingInts).to(adda.publish[Int]).run
 
     probe.expectSubscription().request(maxElements)
     for { i <- ascendingInts } {
