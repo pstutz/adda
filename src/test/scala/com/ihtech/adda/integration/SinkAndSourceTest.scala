@@ -50,27 +50,27 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
   "Adda" should {
 
     "support single-publisher/single-subscriber pubsub for strings" in {
-      check { (elements: List[String]) =>
+      check { (strings: List[String]) =>
         val adda = new Adda
-        verifySingleSinkAndSourceFlow(elements, adda)
+        verifySingleSinkAndSourceFlow(strings, adda)
         adda.shutdown
         successfulTest
       }
     }
 
     "support single-publisher/single-subscriber pubsub for ints" in {
-      check { (elements: List[Int]) =>
+      check { (strings: List[Int]) =>
         val adda = new Adda
-        verifySingleSinkAndSourceFlow(elements, adda)
+        verifySingleSinkAndSourceFlow(strings, adda)
         adda.shutdown
         successfulTest
       }
     }
 
-    "support single-publisher/single-subscriber pubsub for double" in {
-      check { (elements: List[Double]) =>
+    "support single-publisher/single-subscriber pubsub for doubles" in {
+      check { (strings: List[Double]) =>
         val adda = new Adda
-        verifySingleSinkAndSourceFlow(elements, adda)
+        verifySingleSinkAndSourceFlow(strings, adda)
         adda.shutdown
         successfulTest
       }
@@ -79,15 +79,15 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
     "support single-publisher/multiple-subscribers pubsub for strings" in {
       check {
         Prop.forAll(genStringPublisher, genSubscriberCount) {
-          (elements: List[String], numberOfSubscribers: Int) =>
+          (strings: List[String], numberOfSubscribers: Int) =>
             val adda = new Adda
             val probeA = SubscriberProbe[String]
             val probeB = SubscriberProbe[String]
             adda.subscribe[String].to(Sink(probeA)).run
             adda.subscribe[String].to(Sink(probeB)).run
-            Source(elements).to(adda.publish[String]).run
-            verifyWithProbe(elements, probeA)
-            verifyWithProbe(elements, probeB)
+            Source(strings).to(adda.publish[String]).run
+            verifyWithProbe(strings, probeA)
+            verifyWithProbe(strings, probeB)
             adda.awaitCompleted
             adda.shutdown
             successfulTest
@@ -98,12 +98,12 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
     "support multiple-publishers/single-subscriber pubsub for strings" in {
       check {
         Prop.forAll(genListOfStringPublishers) {
-          (sourceElements: List[List[String]]) =>
+          (listOfStringLists: List[List[String]]) =>
             val adda = new Adda
             val receivedFromAdda = adda.subscribe[String].runFold(Set.empty[String])(setAdditionFold)
-            val sources = sourceElements.map(Source(_).to(adda.publish[String]))
+            val sources = listOfStringLists.map(Source(_).to(adda.publish[String]))
             sources.foreach(_.run)
-            val expectedElementSet = sourceElements.flatten.toSet
+            val expectedElementSet = listOfStringLists.flatten.toSet
             receivedFromAdda.onFailure { case t: Throwable => t.printStackTrace() }
             whenReady(receivedFromAdda)(_ should be(expectedElementSet))
             adda.awaitCompleted
@@ -116,13 +116,13 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
     "support multiple-publishers/multiple-subscribers pubsub for strings" in {
       check {
         Prop.forAll(genListOfStringPublishers, genSubscriberCount) {
-          (sourceElements: List[List[String]], numberOfSubscribers: Int) =>
+          (listOfStringLists: List[List[String]], numberOfSubscribers: Int) =>
             val adda = new Adda
             val subscriberResultSetFutures = List.fill(numberOfSubscribers)(
               adda.subscribe[String].runFold(Set.empty[String])(setAdditionFold))
-            val publishers = sourceElements.map(Source(_).to(adda.publish[String]))
+            val publishers = listOfStringLists.map(Source(_).to(adda.publish[String]))
             publishers.foreach(_.run)
-            val expectedResultSet = sourceElements.flatten.toSet
+            val expectedResultSet = listOfStringLists.flatten.toSet
             subscriberResultSetFutures.foreach { resultSetFuture =>
               whenReady(resultSetFuture)(_ should be(expectedResultSet))
             }
@@ -134,59 +134,56 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
     }
 
     "support waiting for completion repeatedly" in {
-      val adda = new Adda
-      try {
-        val probe1 = SubscriberProbe[Int]
-        adda.subscribe[Int].to(Sink(probe1)).run
-        Source(List(1, 2, 3)).to(adda.publish[Int]).run
-        probe1.expectSubscription().request(10)
-        probe1.expectNext(1)
-        probe1.expectNext(2)
-        probe1.expectNext(3)
-        probe1.expectComplete
-        adda.awaitCompleted
-        val probe2 = SubscriberProbe[Int]
-        adda.subscribe[Int].to(Sink(probe2)).run
-        Source(List(1, 2, 3)).to(adda.publish[Int]).run
-        probe2.expectSubscription().request(10)
-        probe2.expectNext(1)
-        probe2.expectNext(2)
-        probe2.expectNext(3)
-        probe2.expectComplete
-        adda.awaitCompleted
-      } finally {
-        adda.shutdown
+      check {
+        Prop.forAll(genListOfStringPublishers, genSubscriberCount) {
+          (listOfStringLists: List[List[String]], numberOfSubscribers: Int) =>
+            val adda = new Adda
+            for { strings <- listOfStringLists } {
+              val subscriberResultSetFutures = List.fill(numberOfSubscribers)(
+                adda.subscribe[String].runFold(Set.empty[String])(setAdditionFold))
+              Source(strings).to(adda.publish[String]).run
+              val expectedResultSet = strings.toSet
+              subscriberResultSetFutures.foreach { resultSetFuture =>
+                whenReady(resultSetFuture)(_ should be(expectedResultSet))
+              }
+              adda.awaitCompleted
+            }
+            adda.shutdown
+            successfulTest
+        }
       }
     }
 
     "support canceling a stream before all elements are streamed" in {
-      val adda = new Adda
-      try {
-        val probe = SubscriberProbe[Int]
-        adda.subscribe[Int].take(1).to(Sink(probe)).run
-        Source(List(1, 2, 3)).to(adda.publish[Int]).run
-        probe.expectSubscription().request(10)
-        probe.expectNext(1)
-        probe.expectComplete
-        adda.awaitCompleted
-      } finally {
-        adda.shutdown
+      check {
+        Prop.forAll(genStringPublisher, genSubscriberCount) {
+          (strings: List[String], numberOfSubscribers: Int) =>
+            val adda = new Adda
+            val probe = SubscriberProbe[String]
+            adda.subscribe[String].take(1).to(Sink(probe)).run
+            Source(strings).to(adda.publish[String]).run
+            verifyWithProbe(List(strings.head), probe)
+            adda.awaitCompleted
+            adda.shutdown
+            successfulTest
+        }
       }
     }
 
     "support calling `awaitCompleted' before any sink/source is attached" in {
-      val adda = new Adda
-      try {
-        adda.awaitCompleted
-        val probe = SubscriberProbe[Int]
-        adda.subscribe[Int].to(Sink(probe)).run
-        Source(List(1)).to(adda.publish[Int]).run
-        probe.expectSubscription().request(10)
-        probe.expectNext(1)
-        probe.expectComplete
-        adda.awaitCompleted
-      } finally {
-        adda.shutdown
+      check {
+        Prop.forAll(genStringPublisher, genSubscriberCount) {
+          (strings: List[String], numberOfSubscribers: Int) =>
+            val adda = new Adda
+            adda.awaitCompleted
+            val probe = SubscriberProbe[String]
+            adda.subscribe[String].take(1).to(Sink(probe)).run
+            Source(strings).to(adda.publish[String]).run
+            verifyWithProbe(strings.take(1), probe)
+            adda.awaitCompleted
+            adda.shutdown
+            successfulTest
+        }
       }
     }
 
