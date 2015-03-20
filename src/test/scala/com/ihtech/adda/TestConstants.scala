@@ -2,6 +2,9 @@ package com.ihtech.adda
 
 object TestConstants {
 
+  /**
+   * A stream probe has to request at least 1 item.
+   */
   val probeMinItemsRequested = 1
 
   /**
