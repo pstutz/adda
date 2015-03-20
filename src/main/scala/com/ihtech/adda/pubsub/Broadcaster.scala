@@ -75,11 +75,6 @@ class Broadcaster(
     }
   }
 
-  def sendingSubscriberIsTerminated(actor: ActorRef, pubSub: PubSubManager): Unit = {
-    val updated = pubSub.removePublisher(actor)
-    checkCompletionAndUpdatePubSub(updated)
-  }
-
   def onBulkNext(bulk: Queue[_], pubSub: PubSubManager): Unit = {
     val s = sender
     val handlerFuture = Future.sequence(privilegedHandlers.
@@ -91,6 +86,11 @@ class Broadcaster(
       case Failure(f) =>
         throw f
     }
+  }
+
+  def sendingSubscriberIsTerminated(actor: ActorRef, pubSub: PubSubManager): Unit = {
+    val updated = pubSub.removePublisher(actor)
+    checkCompletionAndUpdatePubSub(updated)
   }
 
   def senderAwaitsCompletion(pubSub: PubSubManager): Unit = {
