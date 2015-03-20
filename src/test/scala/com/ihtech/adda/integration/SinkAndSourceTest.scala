@@ -1,7 +1,6 @@
 package com.ihtech.adda.integration
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.reflect.ClassTag
 
 import org.scalacheck.Arbitrary.arbContainer
 import org.scalacheck.Prop
@@ -11,7 +10,8 @@ import org.scalatest.prop.Checkers
 
 import com.ihtech.adda.Adda
 import com.ihtech.adda.Generators.{ genListOfStringPublishers, genStringPublisher, genSubscriberCount }
-import com.ihtech.adda.TestConstants.{ probeMinItemsRequested, successfulTest }
+import com.ihtech.adda.TestConstants.successfulTest
+import com.ihtech.adda.TestHelpers.{ aggregateIntoSet, verifySingleSinkAndSourceFlow, verifyWithProbe }
 
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.{ Sink, Source }
@@ -20,32 +20,6 @@ import akka.stream.testkit.StreamTestKit.SubscriberProbe
 
 class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
   implicit val materializer = ActorFlowMaterializer()
-
-  /**
-   * Verifies that a sink receives the elements in `l', when they are streamed into Adda by a source.
-   */
-  def verifySingleSinkAndSourceFlow[C: ClassTag](l: List[C], adda: Adda): Boolean = {
-    val probe = SubscriberProbe[C]
-    adda.subscribe[C].to(Sink(probe)).run
-    Source(l).to(adda.publish[C]).run
-    verifyWithProbe(l, probe)
-    adda.awaitCompleted
-    successfulTest
-  }
-
-  /**
-   * Verifies the probe receives the items in `l' and that the stream completes afterwards.
-   */
-  def verifyWithProbe[C](l: List[C], probe: SubscriberProbe[C]): Unit = {
-    val itemsRequested = math.max(probeMinItemsRequested, l.length)
-    probe.expectSubscription().request(itemsRequested)
-    for { next <- l } {
-      probe.expectNext(next)
-    }
-    probe.expectComplete
-  }
-
-  def aggregateIntoSet[C](s: Set[C], next: C): Set[C] = s + next
 
   "Adda" should {
 

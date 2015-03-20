@@ -14,10 +14,11 @@ class HandlerTest extends FlatSpec with Matchers {
   "A privileged handler" should "receive all published entities" in {
 
     val counter = new AtomicInteger
+
     def intHandler(e: Any) = {
       e match {
-        case i: Int     => counter.addAndGet(i)
-        case other: Any => throw new Exception(s"Unexpected message recieved: $other.")
+        case i: Int => counter.addAndGet(i)
+        case _      => throw new Exception(s"Handler received an unexpected message.")
       }
     }
 
