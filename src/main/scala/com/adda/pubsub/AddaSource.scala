@@ -14,30 +14,28 @@ final case object Complete
 
 class AddaSource[C: ClassTag] extends ActorPublisher[C] with ActorLogging with Stash {
 
-  import context._
-
-  val emptyQueue = Queue.empty[C]
+  private[this] val emptyQueue = Queue.empty[C]
 
   /**
    * Queuing mode that is enabled when the total demand is 0.
    */
   def queuing(queued: Queue[C]): Actor.Receive = LoggingReceive {
     case OnNext(e: C) =>
-      become(queuing(queued.enqueue(e)))
+      context.become(queuing(queued.enqueue(e)))
     case q: Queue[C] =>
-      become(queuing(queued.enqueue(q)))
+      context.become(queuing(queued.enqueue(q)))
     case Request(cnt) =>
       val remaining = deliverFromQueue(queued)
       if (remaining == emptyQueue) {
         unstashAll()
-        become(receive)
+        context.become(receive)
       } else {
-        become(queuing(remaining))
+        context.become(queuing(remaining))
       }
     case Complete =>
       stash()
     case Cancel =>
-      stop(self)
+      context.stop(self)
   }
 
   def receive: Actor.Receive = LoggingReceive {
@@ -45,19 +43,19 @@ class AddaSource[C: ClassTag] extends ActorPublisher[C] with ActorLogging with S
       if (totalDemand > 0) {
         onNext(e)
       } else {
-        become(queuing(Queue(e)))
+        context.become(queuing(Queue(e)))
       }
     case q: Queue[C] =>
       val remaining = deliverFromQueue(q)
       if (remaining != emptyQueue) {
-        become(queuing(remaining))
+        context.become(queuing(remaining))
       }
     case Request(cnt) =>
     case Complete =>
       onComplete()
-      stop(self)
+      context.stop(self)
     case Cancel =>
-      stop(self)
+      context.stop(self)
   }
 
   /**

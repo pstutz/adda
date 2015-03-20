@@ -36,8 +36,8 @@ final case class CreateSubscriber(isTemporary: Boolean) {
 class Broadcaster(
   privilegedHandlers: List[Any => Unit]) extends Actor with ActorLogging with Stash {
 
-  import context._
   implicit val timeout = Timeout(20 seconds)
+  implicit val executor = context.dispatcher
 
   def broadcaster(pubSub: PubSubManager): Actor.Receive = LoggingReceive {
     case creationRequest @ CreatePublisher()   => createPublisher(creationRequest, pubSub)
@@ -51,15 +51,15 @@ class Broadcaster(
 
   def createPublisher(creationRequest: CreatePublisher[_], pubSub: PubSubManager): Unit = {
     val publisher = context.actorOf(Props(creationRequest.createPublisher))
-    watch(publisher)
+    context.watch(publisher)
     sender ! publisher
-    become(broadcaster(pubSub.addPublisher(publisher)))
+    context.become(broadcaster(pubSub.addPublisher(publisher)))
   }
 
   def createSubscriber(creationRequest: CreateSubscriber, pubSub: PubSubManager): Unit = {
     val subscriber = context.actorOf(Props(creationRequest.createSubscriber(self)))
     sender ! subscriber
-    if (!creationRequest.isTemporary) become(broadcaster(pubSub.addSubscriber(subscriber)))
+    if (!creationRequest.isTemporary) context.become(broadcaster(pubSub.addSubscriber(subscriber)))
   }
 
   def onNext(on: OnNext, pubSub: PubSubManager): Unit = {
@@ -109,18 +109,18 @@ class Broadcaster(
   def checkCompletionAndUpdatePubSub(pubsub: PubSubManager): Unit = {
     if (pubsub.isCompleted) {
       pubsub.awaitingCompleted.foreach(_ ! Completed)
-      become(broadcaster(pubsub.copy(awaitingCompleted = Nil)))
+      context.become(broadcaster(pubsub.copy(awaitingCompleted = Nil)))
     } else {
-      become(broadcaster(pubsub))
+      context.become(broadcaster(pubsub))
     }
   }
 
   def receive: Actor.Receive = LoggingReceive {
-    // Become a broadcaster from the first message on.  
+    // Become a broadcaster from the first message on.
     case anything: Any =>
       stash()
       unstashAll()
-      become(broadcaster(PubSubManager()))
+      context.become(broadcaster(PubSubManager()))
   }
 
 }

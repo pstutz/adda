@@ -1,6 +1,6 @@
 package com.adda.integration
 
-import org.scalatest.{ Finders, FlatSpec, Matchers }
+import org.scalatest.{ FlatSpec, Matchers }
 
 import com.adda.Adda
 

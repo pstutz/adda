@@ -1,8 +1,9 @@
 package com.adda.pubsub
 
+import scala.collection.immutable.Queue
+
 import akka.actor.{ ActorRef, actorRef2Scala }
 import akka.stream.actor.ActorSubscriberMessage.OnNext
-import scala.collection.immutable.Queue
 
 /**
  * An actor can either be a publisher or a subscriber, never both.
@@ -42,7 +43,7 @@ case class PubSubManager(
   def awaitingCompleted(waiting: ActorRef): PubSubManager = {
     this.copy(awaitingCompleted = waiting :: awaitingCompleted)
   }
-  
+
   def isCompleted: Boolean = subscribers.isEmpty && publishers.isEmpty
 
 }

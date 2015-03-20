@@ -4,33 +4,36 @@ import scala.collection.immutable.Queue
 
 import akka.actor.{ Actor, ActorLogging, ActorRef, Stash, actorRef2Scala }
 import akka.event.LoggingReceive
+import akka.stream.actor.{ RequestStrategy, WatermarkRequestStrategy }
 import akka.stream.actor.ActorSubscriber
 import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
-import akka.stream.actor.WatermarkRequestStrategy
+
+object FlowControl {
+  private[this] val highWatermark = 50
+  val requestStrategy: RequestStrategy = WatermarkRequestStrategy(highWatermark)
+}
 
 class AddaSink(
   val isTemporary: Boolean,
   val broadcaster: ActorRef) extends ActorSubscriber with ActorLogging with Stash {
 
-  import context._ 
-  
-  val emptyQueue = Queue.empty[Any]
+  private[this] val emptyQueue = Queue.empty[Any]
 
-  val requestStrategy = WatermarkRequestStrategy(50)
+  val requestStrategy = FlowControl.requestStrategy
 
   /**
    * Receive function that queues received elements whilst waiting for `CanSendNext'.
    */
   def queuing(queued: Queue[Any]): Actor.Receive = LoggingReceive {
     case n @ OnNext(e) =>
-      become(queuing(queued.enqueue(e)))
+      context.become(queuing(queued.enqueue(e)))
     case CanSendNext =>
       if (queued.isEmpty) {
         unstashAll()
-        become(receive)
+        context.become(receive)
       } else {
         broadcaster ! queued
-        become(queuing(emptyQueue))
+        context.become(queuing(emptyQueue))
       }
     case OnComplete =>
       stash()
@@ -41,12 +44,12 @@ class AddaSink(
   def receive: Actor.Receive = LoggingReceive {
     case n @ OnNext(e) =>
       broadcaster ! n
-      become(queuing(emptyQueue))
+      context.become(queuing(emptyQueue))
     case CanSendNext =>
       throw new Exception("AddaSink received CanSendNext, but was in queuing mode.")
     case OnComplete =>
       if (!isTemporary) broadcaster ! Completed
-      stop(self)
+      context.stop(self)
     case OnError(e) =>
       handleError(e)
   }

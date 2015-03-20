@@ -3,8 +3,7 @@ package com.adda.interfaces
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
 
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.{ Sink, Source }
 import akka.util.Timeout
 
 trait PubSub {

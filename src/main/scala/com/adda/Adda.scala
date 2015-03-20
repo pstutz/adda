@@ -1,19 +1,21 @@
 package com.adda
 
-import scala.concurrent.Await
+import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
+
 import org.reactivestreams.{ Publisher, Subscriber }
+
 import com.adda.interfaces.PubSub
 import com.adda.pubsub.{ AwaitCompleted, Broadcaster, CreatePublisher, CreateSubscriber }
+
 import akka.actor.{ ActorRef, ActorSystem, Props }
+import akka.event.Logging
 import akka.pattern.ask
 import akka.stream.ActorFlowMaterializer
 import akka.stream.actor.{ ActorPublisher, ActorSubscriber }
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.util.Timeout
-import scala.concurrent.Future
-import akka.event.Logging
 
 /**
  * Adda implements simple publish/subscribe for objects sent via Akka Streams.
@@ -30,20 +32,20 @@ import akka.event.Logging
  */
 class Adda(
   private[this] val privilegedHandlers: List[Any => Unit] = Nil,
-  private[this] implicit val system: ActorSystem = ActorSystem("Adda")) extends PubSub {
+  private[this] implicit val system: ActorSystem = ActorSystem(Adda.defaultSystemName)) extends PubSub {
 
   private[this] var broadcasterForTopic = Map.empty[String, ActorRef]
 
   implicit val materializer = ActorFlowMaterializer()
-  import system.dispatcher
-  private[this] val log = Logging.getLogger(system.eventStream, "Adda")
+  implicit val executor = system.dispatcher
+  private[this] val log = Logging.getLogger(system.eventStream, Adda.defaultSystemName)
 
   /**
    * Returns an Akka Streams source that is subscribed to all published objects of class `C'.
    * Only returns exact instances of `C' and no subclasses.
    */
   def createSource[C: ClassTag]: Source[C, Unit] = {
-    val publisher = getPublisher[C]
+    val publisher = createPublisher[C]
     val source = Source(publisher)
     source
   }
@@ -56,7 +58,7 @@ class Adda(
    * published to the triple store before the object is published to any of the subscribers.
    */
   def createSink[C: ClassTag]: Sink[C, Unit] = {
-    val subscriber = getSubscriber[C]()
+    val subscriber = createSubscriber[C]()
     val sink = Sink(subscriber)
     sink
   }
@@ -68,7 +70,7 @@ class Adda(
    * and will never propagate the completion to the sources that subscribe to the class.
    */
   def createTemporarySink[C: ClassTag]: Sink[C, Unit] = {
-    val subscriber = getSubscriber[C](isTemporary = true)
+    val subscriber = createSubscriber[C](isTemporary = true)
     val sink = Sink(subscriber)
     sink
   }
@@ -112,7 +114,7 @@ class Adda(
     broadcaster
   }
 
-  private[this] def getPublisher[C: ClassTag]: Publisher[C] = {
+  private[this] def createPublisher[C: ClassTag]: Publisher[C] = {
     implicit val timeout = Timeout(5.seconds)
     val t = topic[C]
     val b = broadcaster(t)
@@ -121,7 +123,7 @@ class Adda(
     Await.result(publisherFuture, 5.seconds)
   }
 
-  private[this] def getSubscriber[C: ClassTag](isTemporary: Boolean = false): Subscriber[C] = {
+  private[this] def createSubscriber[C: ClassTag](isTemporary: Boolean = false): Subscriber[C] = {
     implicit val timeout = Timeout(5.seconds)
     val t = topic[C]
     val b = broadcaster(t)
@@ -130,4 +132,8 @@ class Adda(
     Await.result(subscriberFuture, 5.seconds)
   }
 
+}
+
+object Adda {
+  val defaultSystemName = "Adda"
 }
