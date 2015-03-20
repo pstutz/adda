@@ -16,8 +16,8 @@ class HandlerTest extends FlatSpec with Matchers {
     val counter = new AtomicInteger
     def intHandler(e: Any) = {
       e match {
-        case i: Int => counter.addAndGet(i)
-        case other  => throw new Exception("Unexpected entry.")
+        case i: Int     => counter.addAndGet(i)
+        case other: Any => throw new Exception(s"Unexpected message recieved: $other.")
       }
     }
 
@@ -34,7 +34,7 @@ class HandlerTest extends FlatSpec with Matchers {
     in.run
 
     probe.expectSubscription().request(elements)
-    for (i <- 1 to elements) {
+    for { i <- 1 to elements } {
       probe.expectNext(i)
     }
     probe.expectComplete()

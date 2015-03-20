@@ -45,7 +45,7 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
     probe.expectComplete
   }
 
-  def setAdditionFold[C](s: Set[C], next: C): Set[C] = s + next
+  def aggregateIntoSet[C](s: Set[C], next: C): Set[C] = s + next
 
   "Adda" should {
 
@@ -100,7 +100,7 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
         Prop.forAll(genListOfStringPublishers) {
           (listOfStringLists: List[List[String]]) =>
             val adda = new Adda
-            val receivedFromAdda = adda.subscribe[String].runFold(Set.empty[String])(setAdditionFold)
+            val receivedFromAdda = adda.subscribe[String].runFold(Set.empty[String])(aggregateIntoSet)
             val sources = listOfStringLists.map(Source(_).to(adda.publish[String]))
             sources.foreach(_.run)
             val expectedElementSet = listOfStringLists.flatten.toSet
@@ -119,7 +119,7 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
           (listOfStringLists: List[List[String]], numberOfSubscribers: Int) =>
             val adda = new Adda
             val subscriberResultSetFutures = List.fill(numberOfSubscribers)(
-              adda.subscribe[String].runFold(Set.empty[String])(setAdditionFold))
+              adda.subscribe[String].runFold(Set.empty[String])(aggregateIntoSet))
             val publishers = listOfStringLists.map(Source(_).to(adda.publish[String]))
             publishers.foreach(_.run)
             val expectedResultSet = listOfStringLists.flatten.toSet
@@ -140,7 +140,7 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
             val adda = new Adda
             for { strings <- listOfStringLists } {
               val subscriberResultSetFutures = List.fill(numberOfSubscribers)(
-                adda.subscribe[String].runFold(Set.empty[String])(setAdditionFold))
+                adda.subscribe[String].runFold(Set.empty[String])(aggregateIntoSet))
               Source(strings).to(adda.publish[String]).run
               val expectedResultSet = strings.toSet
               subscriberResultSetFutures.foreach { resultSetFuture =>

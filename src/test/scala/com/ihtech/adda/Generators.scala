@@ -17,7 +17,12 @@ object Generators {
   /**
    * Limit maximum number of tested subscribers.
    */
-  val genSubscriberCount = Gen.choose(0, 20)
+  val maxSubscriberCount = 20
+
+  /**
+   * Limit maximum number of tested subscribers.
+   */
+  val genSubscriberCount = Gen.choose(0, maxSubscriberCount)
 
   /**
    * Generates a list of alphanumeric strings that can be published.
