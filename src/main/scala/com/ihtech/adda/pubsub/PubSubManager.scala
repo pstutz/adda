@@ -12,6 +12,7 @@ import akka.stream.actor.ActorSubscriberMessage.OnNext
  * Publishers are the stream sources, which end up publishing the items.
  */
 case class PubSubManager(
+  nextUniqueActorId: Long = 0l,
   awaitingCompleted: List[ActorRef] = Nil,
   subscribers: Set[ActorRef] = Set.empty[ActorRef],
   publishers: Set[ActorRef] = Set.empty[ActorRef]) {
@@ -25,11 +26,15 @@ case class PubSubManager(
   }
 
   def addSubscriber(subscriber: ActorRef): PubSubManager = {
-    this.copy(subscribers = subscribers + subscriber)
+    this.copy(
+      nextUniqueActorId = nextUniqueActorId + 1,
+      subscribers = subscribers + subscriber)
   }
 
   def addPublisher(publisher: ActorRef): PubSubManager = {
-    this.copy(publishers = publishers + publisher)
+    this.copy(
+      nextUniqueActorId = nextUniqueActorId + 1,
+      publishers = publishers + publisher)
   }
 
   def removePublisher(publisher: ActorRef): PubSubManager = {

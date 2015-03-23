@@ -50,14 +50,18 @@ class Broadcaster(
   }
 
   def createPublisher(creationRequest: CreatePublisher[_], pubSub: PubSubManager): Unit = {
-    val publisher = context.actorOf(Props(creationRequest.createPublisher))
+    val publisher = context.actorOf(
+      Props(creationRequest.createPublisher),
+      s"publisher${pubSub.nextUniqueActorId}")
     context.watch(publisher)
     sender ! publisher
     context.become(broadcaster(pubSub.addPublisher(publisher)))
   }
 
   def createSubscriber(creationRequest: CreateSubscriber, pubSub: PubSubManager): Unit = {
-    val subscriber = context.actorOf(Props(creationRequest.createSubscriber(self)))
+    val subscriber = context.actorOf(
+      Props(creationRequest.createSubscriber(self)),
+      s"subscriber${pubSub.nextUniqueActorId}")
     sender ! subscriber
     if (creationRequest.trackCompletion) context.become(broadcaster(pubSub.addSubscriber(subscriber)))
   }
