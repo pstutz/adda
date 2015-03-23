@@ -19,13 +19,12 @@ import akka.util.Timeout
 
 /**
  * Adda implements simple publish/subscribe for objects sent via Akka Streams.
- * It also exposes a SPARQL API for a triple store.
  *
- * The handlers in `privilegedHandlers' get called on all entities that Adda receives,
- * and they are guaranteed to finish running before the entity is passed on to the sinks.
+ * The handlers in `privilegedHandlers' get called on all published entities 
+ * and they are guaranteed to finish running before the entity is passed on to the subscribers.
  *
- * Adda automatically completes all sources for a class, when the number of active non-temporary sinks
- * for this class was > 0, and then falls back to 0.
+ * Adda automatically completes all sources for a class, when the number of tracked publishers
+ * for this class was > 0, and then falls back to 0 due to stream completions.
  *
  * PubSub cycles are possible, but in this case the automated stream completion does
  * not work.
