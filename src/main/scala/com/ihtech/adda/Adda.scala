@@ -26,8 +26,7 @@ import akka.util.Timeout
  * Adda automatically completes all sources for a class, when the number of tracked publishers
  * for this class was > 0, and then falls back to 0 due to stream completions.
  *
- * PubSub cycles are possible, but in this case the automated stream completion does
- * not work.
+ * PubSub cycles are possible, but in this case the stream completion propagation does not work.
  */
 class Adda(
   private[this] val privilegedHandlers: List[Any => Unit] = Nil,
