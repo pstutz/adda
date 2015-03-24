@@ -78,7 +78,6 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
             val sources = listOfStringLists.map(Source(_).to(adda.publish[String]))
             sources.foreach(_.run)
             val expectedElementSet = listOfStringLists.flatten.toSet
-            receivedFromAdda.onFailure { case t: Throwable => t.printStackTrace() }
             whenReady(receivedFromAdda)(_ should be(expectedElementSet))
             adda.awaitCompleted
             adda.shutdown

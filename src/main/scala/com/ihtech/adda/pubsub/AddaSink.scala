@@ -8,6 +8,8 @@ import akka.stream.actor.{ RequestStrategy, WatermarkRequestStrategy }
 import akka.stream.actor.ActorSubscriber
 import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
 
+case class IllegalActorState(msg: String) extends Exception(msg)
+
 object FlowControl {
   private[this] val highWatermark = 50
   val requestStrategy: RequestStrategy = WatermarkRequestStrategy(highWatermark)
@@ -46,7 +48,7 @@ class AddaSink(
       broadcaster ! n
       context.become(queuing(emptyQueue))
     case CanSendNext =>
-      throw new Exception("AddaSink received CanSendNext, but was in queuing mode.")
+      throw new IllegalActorState("AddaSink received CanSendNext, but was not in queueing mode.")
     case OnComplete =>
       if (trackCompletion) broadcaster ! Completed
       context.stop(self)
@@ -56,7 +58,6 @@ class AddaSink(
 
   def handleError(e: Throwable): Unit = {
     log.error(e, s"Adda sink received error ${e.getMessage} from $sender")
-    e.printStackTrace
   }
 
 }
