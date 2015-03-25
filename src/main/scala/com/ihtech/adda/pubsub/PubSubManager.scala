@@ -12,7 +12,7 @@ import akka.stream.actor.ActorSubscriberMessage.OnNext
  * Publishers are the stream sources, which end up publishing the items.
  */
 case class PubSubManager(
-  nextUniqueActorId: Long = 0l,
+  nextUniqueActorId: Long = 0L,
   awaitingCompleted: List[ActorRef] = Nil,
   subscribers: Set[ActorRef] = Set.empty[ActorRef],
   publishers: Set[ActorRef] = Set.empty[ActorRef]) {

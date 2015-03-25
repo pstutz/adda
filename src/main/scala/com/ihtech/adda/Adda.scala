@@ -20,7 +20,7 @@ import akka.util.Timeout
 /**
  * Adda implements simple publish/subscribe for objects sent via Akka Streams.
  *
- * The handlers in `privilegedHandlers' get called on all published entities 
+ * The handlers in `privilegedHandlers' get called on all published entities
  * and they are guaranteed to finish running before the entity is passed on to the subscribers.
  *
  * Adda automatically completes all sources for a class, when the number of tracked publishers

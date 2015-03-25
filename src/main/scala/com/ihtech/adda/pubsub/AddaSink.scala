@@ -40,7 +40,7 @@ class AddaSink(
     case OnComplete =>
       stash()
     case OnError(e) =>
-      handleError(e)
+      reportError(e)
   }
 
   def receive: Actor.Receive = LoggingReceive {
@@ -53,11 +53,11 @@ class AddaSink(
       if (trackCompletion) broadcaster ! Completed
       context.stop(self)
     case OnError(e) =>
-      handleError(e)
+      reportError(e)
   }
 
-  def handleError(e: Throwable): Unit = {
-    log.error(e, s"Adda sink received error ${e.getMessage} from $sender")
+  def reportError(e: Throwable): Unit = {
+    log.error(e, s"Adda sink received error ${e.getMessage} from $sender.")
   }
 
 }

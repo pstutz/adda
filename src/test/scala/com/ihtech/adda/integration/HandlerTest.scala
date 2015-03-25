@@ -23,8 +23,8 @@ class HandlerTest extends FlatSpec with Matchers {
     }
 
     val adda = new Adda(List(intHandler))
-    implicit val system = ActorSystem("Test")
-    implicit val materializer = ActorFlowMaterializer()
+    implicit val system = adda.system
+    implicit val materializer = adda.materializer
 
     val elements = 1000000
 

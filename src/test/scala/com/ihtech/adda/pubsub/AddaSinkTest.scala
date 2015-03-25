@@ -18,16 +18,16 @@ class AddaSinkTest extends FlatSpec with Matchers with BeforeAndAfterAll {
 akka.loggers = ["akka.testkit.TestEventListener"]
 """)))
 
-  private[this] val testStreamElement = OnNext("test")
-
-  override def afterAll {
+  override def afterAll: Unit = {
     system.shutdown
   }
 
-  "AddaSinkActor" should "forward received stream elements to the broadcaster" in {
+  private[this] val testStreamElement = OnNext("test")
+
+  "AddaSink actor" should "forward received stream elements to the broadcaster" in {
     val broadcasterProbe = TestProbe()
     val trackCompletion = false
-    val subscriber = system.actorOf(Props(new AddaSink(trackCompletion, broadcasterProbe.ref)))
+    val subscriber = TestActorRef(Props(new AddaSink(trackCompletion, broadcasterProbe.ref)))
     subscriber ! testStreamElement
     broadcasterProbe.expectMsg(testStreamElement)
   }
@@ -35,7 +35,7 @@ akka.loggers = ["akka.testkit.TestEventListener"]
   it should "log received errors in default mode" in {
     val broadcasterProbe = TestProbe()
     val trackCompletion = false
-    val subscriber = system.actorOf(Props(new AddaSink(trackCompletion, broadcasterProbe.ref)))
+    val subscriber = TestActorRef(Props(new AddaSink(trackCompletion, broadcasterProbe.ref)))
     EventFilter[TestException](occurrences = 1) intercept {
       subscriber ! OnError(TestException("Just testing."))
     }
@@ -45,7 +45,7 @@ akka.loggers = ["akka.testkit.TestEventListener"]
   it should "log received errors in queueing mode" in {
     val broadcasterProbe = TestProbe()
     val trackCompletion = false
-    val subscriber = system.actorOf(Props(new AddaSink(trackCompletion, broadcasterProbe.ref)))
+    val subscriber = TestActorRef(Props(new AddaSink(trackCompletion, broadcasterProbe.ref)))
     subscriber ! testStreamElement
     broadcasterProbe.expectMsg(testStreamElement)
     EventFilter[TestException](occurrences = 1) intercept {

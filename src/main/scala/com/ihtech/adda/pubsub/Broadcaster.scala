@@ -74,8 +74,8 @@ class Broadcaster(
       case Success(_) =>
         pubSub.broadcastToPublishers(on)
         s ! CanSendNext
-      case Failure(f) =>
-        throw f
+      case Failure(e) =>
+        reportHandlerError(e)
     }
   }
 
@@ -87,8 +87,8 @@ class Broadcaster(
       case Success(_) =>
         pubSub.bulkBroadcastToPublishers(bulk)
         s ! CanSendNext
-      case Failure(f) =>
-        throw f
+      case Failure(e) =>
+        reportHandlerError(e)
     }
   }
 
@@ -125,6 +125,10 @@ class Broadcaster(
       stash()
       unstashAll()
       context.become(broadcaster(PubSubManager()))
+  }
+
+  def reportHandlerError(e: Throwable): Unit = {
+    log.error(e, s"Handler(s) failed with error ${e.getMessage}.")
   }
 
 }
