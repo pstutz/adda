@@ -16,7 +16,12 @@ object FlowControl {
 }
 
 /**
- * 
+ * Publishes stream elements to the broadcaster actor for its type.
+ * Queues elements until the last element or batch of elements were delivered in
+ * order to guarantee that elements are delivered to the subscribers in the same order
+ * as they were received at this publisher. This is necessary, because the broadcaster
+ * uses futures and given their asynchronous execution the ordered delivery would
+ * otherwise not be guaranteed.
  */
 class Publisher(
   val trackCompletion: Boolean,
