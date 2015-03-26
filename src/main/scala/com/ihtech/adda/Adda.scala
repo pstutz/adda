@@ -4,8 +4,6 @@ import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
 
-import org.reactivestreams.{ Publisher, Subscriber }
-
 import com.ihtech.adda.interfaces.PubSub
 import com.ihtech.adda.pubsub.{ AwaitCompleted, Broadcaster, CreatePublisher, CreateSubscriber }
 
@@ -39,15 +37,11 @@ class Adda(
   private[this] val log = Logging.getLogger(system.eventStream, Adda.defaultSystemName)
 
   def subscribe[C: ClassTag]: Source[C, Unit] = {
-    val publisher = createPublisher[C]
-    val source = Source(publisher)
-    source
+    createSubscriptionSource[C]
   }
 
   def publish[C: ClassTag](trackCompletion: Boolean = true): Sink[C, Unit] = {
-    val subscriber = createSubscriber[C](trackCompletion)
-    val sink = Sink(subscriber)
-    sink
+    createPublicationSink[C](trackCompletion)
   }
 
   def awaitCompleted(implicit timeout: Timeout = Timeout(300.seconds)): Unit = {
@@ -79,22 +73,31 @@ class Adda(
     broadcaster
   }
 
-  private[this] def createPublisher[C: ClassTag]: Publisher[C] = {
+  /**
+   * To create a publisher we also need to create a subscriber that connects with it from inside Adda.
+   */
+  private[this] def createSubscriptionSource[C: ClassTag]: Source[C, Unit] = {
     implicit val timeout = Timeout(5.seconds)
     val t = topic[C]
     val b = broadcaster(t)
-    val publisherActorFuture = b ? CreatePublisher[C]()
-    val publisherFuture = publisherActorFuture.map(p => ActorPublisher[C](p.asInstanceOf[ActorRef]))
-    Await.result(publisherFuture, 5.seconds)
+    val subscriberActorFuture = b ? CreateSubscriber[C]()
+    // To create the source we need to create an actor publisher that connects the source with the Adda subscriber.
+    val sourceFuture = subscriberActorFuture
+      .map(p => ActorPublisher[C](p.asInstanceOf[ActorRef]))
+      .map(Source(_))
+    Await.result(sourceFuture, 5.seconds)
   }
 
-  private[this] def createSubscriber[C: ClassTag](trackCompletion: Boolean): Subscriber[C] = {
+  private[this] def createPublicationSink[C: ClassTag](trackCompletion: Boolean): Sink[C, Unit] = {
     implicit val timeout = Timeout(5.seconds)
     val t = topic[C]
     val b = broadcaster(t)
-    val subscriberActorFuture = b ? CreateSubscriber(trackCompletion)
-    val subscriberFuture = subscriberActorFuture.map(s => ActorSubscriber[C](s.asInstanceOf[ActorRef]))
-    Await.result(subscriberFuture, 5.seconds)
+    val publisherActorFuture = b ? CreatePublisher(trackCompletion)
+    // To create the sink we need to create an actor subscriber that connects the sink with the Adda publisher.
+    val sinkFuture = publisherActorFuture
+      .map(s => ActorSubscriber[C](s.asInstanceOf[ActorRef]))
+      .map(Sink(_))
+    Await.result(sinkFuture, 5.seconds)
   }
 
 }

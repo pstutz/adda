@@ -17,12 +17,12 @@ case class PubSubManager(
   subscribers: Set[ActorRef] = Set.empty[ActorRef],
   publishers: Set[ActorRef] = Set.empty[ActorRef]) {
 
-  def broadcastToPublishers(toBroadcast: OnNext): Unit = {
-    publishers.foreach(_ ! toBroadcast)
+  def broadcastToSubscribers(toBroadcast: OnNext): Unit = {
+    subscribers.foreach(_ ! toBroadcast)
   }
 
-  def bulkBroadcastToPublishers(bulk: Queue[_]): Unit = {
-    publishers.foreach(_ ! bulk)
+  def bulkBroadcastToSubscribers(bulk: Queue[_]): Unit = {
+    subscribers.foreach(_ ! bulk)
   }
 
   def addSubscriber(subscriber: ActorRef): PubSubManager = {

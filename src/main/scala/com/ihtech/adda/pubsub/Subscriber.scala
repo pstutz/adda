@@ -12,7 +12,7 @@ import akka.stream.actor.ActorSubscriberMessage.OnNext
 
 final case object Complete
 
-class AddaSource[C: ClassTag] extends ActorPublisher[C] with ActorLogging with Stash {
+class Subscriber[C: ClassTag] extends ActorPublisher[C] with ActorLogging with Stash {
 
   private[this] val emptyQueue = Queue.empty[C]
 

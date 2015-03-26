@@ -15,7 +15,10 @@ object FlowControl {
   val requestStrategy: RequestStrategy = WatermarkRequestStrategy(highWatermark)
 }
 
-class AddaSink(
+/**
+ * 
+ */
+class Publisher(
   val trackCompletion: Boolean,
   val broadcaster: ActorRef) extends ActorSubscriber with ActorLogging with Stash {
 
@@ -24,12 +27,12 @@ class AddaSink(
   val requestStrategy = FlowControl.requestStrategy
 
   /**
-   * Receive function that queues received elements whilst waiting for `CanSendNext'.
+   * Receive function that queues received elements whilst waiting for `CanPublishNext'.
    */
   def queuing(queued: Queue[Any]): Actor.Receive = LoggingReceive {
     case n @ OnNext(e) =>
       context.become(queuing(queued.enqueue(e)))
-    case CanSendNext =>
+    case CanPublishNext =>
       if (queued.isEmpty) {
         unstashAll()
         context.become(receive)
@@ -47,8 +50,8 @@ class AddaSink(
     case n @ OnNext(e) =>
       broadcaster ! n
       context.become(queuing(emptyQueue))
-    case CanSendNext =>
-      throw new IllegalActorState("AddaSink received CanSendNext, but was not in queueing mode.")
+    case CanPublishNext =>
+      throw new IllegalActorState("AddaSink received CanPublishNext, but was not in queueing mode.")
     case OnComplete =>
       if (trackCompletion) broadcaster ! Completed
       context.stop(self)
