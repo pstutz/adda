@@ -80,7 +80,7 @@ class Adda(
     implicit val timeout = Timeout(5.seconds)
     val t = topic[C]
     val b = broadcaster(t)
-    val subscriberActorFuture = b ? CreateSubscriber[C]()
+    val subscriberActorFuture = b ? new CreateSubscriber[C]()
     // To create the source we need to create an actor publisher that connects the source with the Adda subscriber.
     val sourceFuture = subscriberActorFuture
       .map(p => ActorPublisher[C](p.asInstanceOf[ActorRef]))
@@ -92,7 +92,7 @@ class Adda(
     implicit val timeout = Timeout(5.seconds)
     val t = topic[C]
     val b = broadcaster(t)
-    val publisherActorFuture = b ? CreatePublisher(trackCompletion)
+    val publisherActorFuture = b ? new CreatePublisher(trackCompletion)
     // To create the sink we need to create an actor subscriber that connects the sink with the Adda publisher.
     val sinkFuture = publisherActorFuture
       .map(s => ActorSubscriber[C](s.asInstanceOf[ActorRef]))

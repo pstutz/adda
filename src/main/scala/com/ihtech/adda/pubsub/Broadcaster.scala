@@ -6,11 +6,11 @@ import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 import scala.util.{ Failure, Success }
-
 import akka.actor.{ Actor, ActorLogging, ActorRef, Props, Stash, Terminated, actorRef2Scala }
 import akka.event.LoggingReceive
 import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.util.Timeout
+import akka.actor.ActorRefFactory
 
 final case object AwaitCompleted
 
@@ -18,13 +18,25 @@ final case object Completed
 
 final case object CanPublishNext
 
-final case class CreateSubscriber[C: ClassTag]() {
-  def createSubscriber: Subscriber[C] = new Subscriber[C]()
+class CreateSubscriber[C: ClassTag]() {
+
+  /**
+   * Allows to use a different factory for testing.
+   */
+  def createSubscriber(f: ActorRefFactory, uniqueId: Long): ActorRef =
+    f.actorOf(Props(new Subscriber[C]()), s"subscriber${uniqueId}")
+
   val className = implicitly[ClassTag[C]].runtimeClass.getName
 }
 
-final case class CreatePublisher(trackCompletion: Boolean) {
-  def createPublisher(broadcaster: ActorRef): Publisher = new Publisher(trackCompletion, broadcaster)
+class CreatePublisher(val trackCompletion: Boolean) {
+
+  /**
+   * Allows to use a different factory for testing.
+   */
+  def createPublisher(f: ActorRefFactory, uniqueId: Long, broadcaster: ActorRef): ActorRef =
+    f.actorOf(Props(new Publisher(trackCompletion, broadcaster)), s"publisher${uniqueId}")
+
 }
 
 /**
@@ -46,8 +58,8 @@ class Broadcaster(
   implicit val executor = context.dispatcher
 
   def broadcaster(pubSub: PubSubManager): Actor.Receive = LoggingReceive {
-    case creationRequest @ CreateSubscriber() => createSubscriber(creationRequest, pubSub)
-    case creationRequest @ CreatePublisher(_) => createPublisher(creationRequest, pubSub)
+    case creationRequest: CreateSubscriber[_] => createSubscriber(creationRequest, pubSub)
+    case creationRequest: CreatePublisher     => createPublisher(creationRequest, pubSub)
     case on: OnNext                           => onNext(on, pubSub)
     case bulk: Queue[_]                       => onBulkNext(bulk, pubSub)
     case Terminated(actor)                    => sendingSubscriberIsTerminated(actor, pubSub)
@@ -56,18 +68,14 @@ class Broadcaster(
   }
 
   def createSubscriber(creationRequest: CreateSubscriber[_], pubSub: PubSubManager): Unit = {
-    val subscriber = context.actorOf(
-      Props(creationRequest.createSubscriber),
-      s"subscriber${pubSub.nextUniqueActorId}")
+    val subscriber = creationRequest.createSubscriber(context, pubSub.nextUniqueActorId)
     context.watch(subscriber)
     sender ! subscriber
     context.become(broadcaster(pubSub.addSubscriber(subscriber)))
   }
 
   def createPublisher(creationRequest: CreatePublisher, pubSub: PubSubManager): Unit = {
-    val publisher = context.actorOf(
-      Props(creationRequest.createPublisher(self)),
-      s"publisher${pubSub.nextUniqueActorId}")
+    val publisher = creationRequest.createPublisher(context, pubSub.nextUniqueActorId, self)
     sender ! publisher
     if (creationRequest.trackCompletion) context.become(broadcaster(pubSub.addPublisher(publisher)))
   }
