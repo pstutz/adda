@@ -11,22 +11,22 @@ import org.scalatest.prop.Checkers
 import com.ihtech.adda.Adda
 import com.ihtech.adda.Generators.{ genListOfStringPublishers, genStringPublisher, genSubscriberCount }
 import com.ihtech.adda.TestConstants.successfulTest
-import com.ihtech.adda.TestHelpers.{ aggregateIntoList, aggregateIntoSet, containsSubsequence, verifySingleSinkAndSourceFlow, verifyWithProbe }
+import com.ihtech.adda.TestHelpers.{ aggregateIntoList, aggregateIntoSet, containsSubsequence, testSystem, verifySingleSinkAndSourceFlow, verifyWithProbe }
 
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.testkit.AkkaSpec
 import akka.stream.testkit.StreamTestKit.SubscriberProbe
 
-class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
+class PubSubTest extends AkkaSpec with Checkers with ScalaFutures {
   implicit val materializer = ActorFlowMaterializer()
 
   private[this] val subsequenceNotFound =
     "Sequence published by one of the publishers was not a subsequence of the sequence received by the subscriber."
 
-  "Adda" should {
+  "PubSub" should {
 
-    "support single-publisher/single-subscriber pubsub for strings" in {
+    "support single-publisher/single-subscriber scenarios for strings" in {
       check { (strings: List[String]) =>
         val adda = new Adda
         verifySingleSinkAndSourceFlow(strings, adda)
@@ -35,7 +35,7 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
       }
     }
 
-    "support single-publisher/single-subscriber pubsub for ints" in {
+    "support single-publisher/single-subscriber scenarios for ints" in {
       check { (strings: List[Int]) =>
         val adda = new Adda
         verifySingleSinkAndSourceFlow(strings, adda)
@@ -44,7 +44,7 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
       }
     }
 
-    "support single-publisher/single-subscriber pubsub for doubles" in {
+    "support single-publisher/single-subscriber scenarios for doubles" in {
       check { (strings: List[Double]) =>
         val adda = new Adda
         verifySingleSinkAndSourceFlow(strings, adda)
@@ -53,7 +53,7 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
       }
     }
 
-    "support single-publisher/multiple-subscribers pubsub for strings" in {
+    "support single-publisher/multiple-subscribers scenarios for strings" in {
       check {
         Prop.forAll(genStringPublisher, genSubscriberCount) {
           (strings: List[String], numberOfSubscribers: Int) =>
@@ -72,7 +72,7 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
       }
     }
 
-    "support multiple-publishers/single-subscriber pubsub for strings" in {
+    "support multiple-publishers/single-subscriber scenarios for strings" in {
       check {
         Prop.forAll(genListOfStringPublishers) {
           (listOfStringLists: List[List[String]]) =>
@@ -97,7 +97,7 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
       }
     }
 
-    "support multiple-publishers/multiple-subscribers pubsub for strings" in {
+    "support multiple-publishers/multiple-subscribers scenarios for strings" in {
       check {
         Prop.forAll(genListOfStringPublishers, genSubscriberCount) {
           (listOfStringLists: List[List[String]], numberOfSubscribers: Int) =>
@@ -161,7 +161,7 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
       }
     }
 
-    "support calling `awaitCompleted' before any sink/source is attached" in {
+    "support calling `awaitCompleted' before any publisher/subscriber is created" in {
       check {
         Prop.forAll(genStringPublisher, genSubscriberCount) {
           (strings: List[String], numberOfSubscribers: Int) =>

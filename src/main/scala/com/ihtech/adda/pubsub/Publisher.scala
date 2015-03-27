@@ -56,7 +56,8 @@ class Publisher(
       broadcaster ! n
       context.become(queuing(emptyQueue))
     case CanPublishNext =>
-      throw new IllegalActorState("AddaSink received CanPublishNext, but was not in queueing mode.")
+      val msg = "Publisher received CanPublishNext, but was not in queueing mode."
+      log.error(new IllegalActorState(msg), msg)
     case OnComplete =>
       if (trackCompletion) broadcaster ! Completed
       context.stop(self)

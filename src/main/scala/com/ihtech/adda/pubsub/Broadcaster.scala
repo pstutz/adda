@@ -58,8 +58,8 @@ class Broadcaster(
   implicit val executor = context.dispatcher
 
   def broadcaster(pubSub: PubSubManager): Actor.Receive = LoggingReceive {
-    case creationRequest: CreateSubscriber[_] => createSubscriber(creationRequest, pubSub)
     case creationRequest: CreatePublisher     => createPublisher(creationRequest, pubSub)
+    case creationRequest: CreateSubscriber[_] => createSubscriber(creationRequest, pubSub)
     case on: OnNext                           => onNext(on, pubSub)
     case bulk: Queue[_]                       => onBulkNext(bulk, pubSub)
     case Terminated(actor)                    => sendingSubscriberIsTerminated(actor, pubSub)
@@ -67,17 +67,17 @@ class Broadcaster(
     case Completed                            => sendingPublisherIsCompleted(pubSub)
   }
 
+  def createPublisher(creationRequest: CreatePublisher, pubSub: PubSubManager): Unit = {
+    val publisher = creationRequest.createPublisher(context, pubSub.nextUniqueActorId, self)
+    sender ! publisher
+    if (creationRequest.trackCompletion) context.become(broadcaster(pubSub.addPublisher(publisher)))
+  }
+
   def createSubscriber(creationRequest: CreateSubscriber[_], pubSub: PubSubManager): Unit = {
     val subscriber = creationRequest.createSubscriber(context, pubSub.nextUniqueActorId)
     context.watch(subscriber)
     sender ! subscriber
     context.become(broadcaster(pubSub.addSubscriber(subscriber)))
-  }
-
-  def createPublisher(creationRequest: CreatePublisher, pubSub: PubSubManager): Unit = {
-    val publisher = creationRequest.createPublisher(context, pubSub.nextUniqueActorId, self)
-    sender ! publisher
-    if (creationRequest.trackCompletion) context.become(broadcaster(pubSub.addPublisher(publisher)))
   }
 
   def onNext(on: OnNext, pubSub: PubSubManager): Unit = {

@@ -4,6 +4,7 @@ import scala.annotation.tailrec
 import scala.reflect.ClassTag
 
 import com.ihtech.adda.TestConstants.{ probeMinItemsRequested, successfulTest }
+import com.typesafe.config.ConfigFactory
 
 import akka.actor.ActorSystem
 import akka.stream.ActorFlowMaterializer
@@ -11,6 +12,25 @@ import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.testkit.StreamTestKit.SubscriberProbe
 
 object TestHelpers {
+
+  private[this] def insertStringIf(insert: String, condition: Boolean) = if (condition) insert else ""
+
+  /**
+   * Test system that is not too chatty and allows to enable the test event listener.
+   */
+  def testSystem(enableTestEventListener: Boolean = false): ActorSystem = {
+    ActorSystem("TestSystem", ConfigFactory.parseString(
+      s"""
+      |akka {
+      |  loggers = [${insertStringIf("akka.testkit.TestEventListener", enableTestEventListener)}]
+      |  loglevel = "WARNING"
+      |  stdout-loglevel = "WARNING"
+      |  log-dead-letters = off
+      |  log-dead-letters-during-shutdown = off
+      |  actor.debug.receive = off
+      |}
+    """.stripMargin))
+  }
 
   /**
    * Returns true iff the subsequence appears in the sequence.
