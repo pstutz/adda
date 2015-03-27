@@ -1,12 +1,15 @@
 package com.ihtech.adda.pubsub
 
 import scala.collection.immutable.Queue
-import org.scalatest.{ BeforeAndAfterAll, Finders, FlatSpec, Matchers }
+import scala.reflect.ClassTag
+
+import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers }
+
 import com.ihtech.adda.TestHelpers.testSystem
+
 import akka.actor.{ ActorRef, ActorRefFactory, Props }
 import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.testkit.{ EventFilter, TestActorRef, TestProbe }
-import scala.reflect.ClassTag
 
 class PublisherInjector(injectedActorRef: ActorRef, trackCompletion: Boolean)
   extends CreatePublisher(trackCompletion: Boolean) {
@@ -27,7 +30,9 @@ class BroadcasterTest extends FlatSpec with Matchers with BeforeAndAfterAll {
     system.shutdown
   }
 
-  private[this] val testStreamElement = OnNext("test")
+  private[this] val testString = "test"
+  private[this] val testStreamElement = OnNext(testString)
+  private[this] val testQueue = Queue[String](testString, testString)
 
   private[this] val failingHandler: Any => Unit = { a: Any =>
     throw TestException("The handler had a problem.")
@@ -62,6 +67,24 @@ class BroadcasterTest extends FlatSpec with Matchers with BeforeAndAfterAll {
     publisher.send(broadcaster, testStreamElement)
     subscriberA.expectMsg(testStreamElement)
     subscriberB.expectMsg(testStreamElement)
+    publisher.expectMsg(CanPublishNext)
+  }
+
+  it should "broadcast a bulk message from a publisher to all subscribers" in {
+    val broadcaster = system.actorOf(Props(new Broadcaster(Nil)))
+    val adda = TestProbe()
+    val publisher = TestProbe()
+    val subscriberA = TestProbe()
+    val subscriberB = TestProbe()
+    adda.send(broadcaster, new PublisherInjector(publisher.ref, trackCompletion = true))
+    adda.expectMsg(publisher.ref)
+    adda.send(broadcaster, new SubscriberInjector[String](subscriberA.ref))
+    adda.expectMsg(subscriberA.ref)
+    adda.send(broadcaster, new SubscriberInjector[String](subscriberB.ref))
+    adda.expectMsg(subscriberB.ref)
+    publisher.send(broadcaster, testQueue)
+    subscriberA.expectMsg(testQueue)
+    subscriberB.expectMsg(testQueue)
     publisher.expectMsg(CanPublishNext)
   }
 

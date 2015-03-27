@@ -2,7 +2,7 @@ package com.ihtech.adda.pubsub
 
 import scala.collection.immutable.Queue
 
-import org.scalatest.{ BeforeAndAfterAll, Finders, FlatSpec, Matchers }
+import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers }
 
 import com.ihtech.adda.TestHelpers.testSystem
 
@@ -20,12 +20,14 @@ class PublisherTest extends FlatSpec with Matchers with BeforeAndAfterAll {
     system.shutdown
   }
 
-  private[this] val testStreamElement = OnNext("test")
+  private[this] val testString = "test"
+  private[this] val testStreamElement = OnNext(testString)
+  private[this] val testQueue = Queue[String](testString, testString)
 
   "Publisher actor" should "forward received stream elements to the broadcaster" in {
     val broadcasterProbe = TestProbe()
     val trackCompletion = false
-    val publisher = TestActorRef(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
+    val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
     publisher ! testStreamElement
     broadcasterProbe.expectMsg(testStreamElement)
   }
@@ -85,7 +87,7 @@ class PublisherTest extends FlatSpec with Matchers with BeforeAndAfterAll {
     publisher ! testStreamElement
     publisher ! testStreamElement
     publisher ! CanPublishNext
-    broadcasterProbe.expectMsg(Queue[Any](testStreamElement.element, testStreamElement.element))
+    broadcasterProbe.expectMsg(testQueue)
   }
 
 }
