@@ -11,7 +11,7 @@ import org.scalatest.prop.Checkers
 import com.ihtech.adda.Adda
 import com.ihtech.adda.Generators.{ genListOfStringPublishers, genStringPublisher, genSubscriberCount }
 import com.ihtech.adda.TestConstants.successfulTest
-import com.ihtech.adda.TestHelpers.{ aggregateIntoSet, verifySingleSinkAndSourceFlow, verifyWithProbe }
+import com.ihtech.adda.TestHelpers.{ aggregateIntoList, aggregateIntoSet, containsSubsequence, verifySingleSinkAndSourceFlow, verifyWithProbe }
 
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.{ Sink, Source }
@@ -20,6 +20,9 @@ import akka.stream.testkit.StreamTestKit.SubscriberProbe
 
 class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
   implicit val materializer = ActorFlowMaterializer()
+
+  private[this] val subsequenceNotFound =
+    "Sequence published by one of the publishers was not a subsequence of the sequence received by the subscriber."
 
   "Adda" should {
 
@@ -74,11 +77,19 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
         Prop.forAll(genListOfStringPublishers) {
           (listOfStringLists: List[List[String]]) =>
             val adda = new Adda
-            val receivedFromAdda = adda.subscribe[String].runFold(Set.empty[String])(aggregateIntoSet)
+            // Ordered list of received elements.
+            val receivedFromAdda = adda.subscribe[String]
+              .runFold(List.empty[String])(aggregateIntoList)
+              .map(_.reverse)
             val sources = listOfStringLists.map(Source(_).to(adda.publish[String]))
             sources.foreach(_.run)
             val expectedElementSet = listOfStringLists.flatten.toSet
-            whenReady(receivedFromAdda)(_ should be(expectedElementSet))
+            whenReady(receivedFromAdda) { orderedListOfReceived =>
+              orderedListOfReceived.toSet should be(expectedElementSet)
+              listOfStringLists.foreach { inputSequence =>
+                assert(containsSubsequence(orderedListOfReceived, inputSequence), subsequenceNotFound)
+              }
+            }
             adda.awaitCompleted
             adda.shutdown
             successfulTest
@@ -91,13 +102,20 @@ class SinkAndSourceTest extends AkkaSpec with Checkers with ScalaFutures {
         Prop.forAll(genListOfStringPublishers, genSubscriberCount) {
           (listOfStringLists: List[List[String]], numberOfSubscribers: Int) =>
             val adda = new Adda
-            val subscriberResultSetFutures = List.fill(numberOfSubscribers)(
-              adda.subscribe[String].runFold(Set.empty[String])(aggregateIntoSet))
+            val subscriberOrderedReceivedFutures = List.fill(numberOfSubscribers)(
+              adda.subscribe[String]
+                .runFold(List.empty[String])(aggregateIntoList)
+                .map(_.reverse))
             val publishers = listOfStringLists.map(Source(_).to(adda.publish[String]))
             publishers.foreach(_.run)
-            val expectedResultSet = listOfStringLists.flatten.toSet
-            subscriberResultSetFutures.foreach { resultSetFuture =>
-              whenReady(resultSetFuture)(_ should be(expectedResultSet))
+            val expectedElementSet = listOfStringLists.flatten.toSet
+            subscriberOrderedReceivedFutures.foreach { orderedResultFuture =>
+              whenReady(orderedResultFuture) { orderedListOfReceived =>
+                orderedListOfReceived.toSet should be(expectedElementSet)
+                listOfStringLists.foreach { inputSequence =>
+                  assert(containsSubsequence(orderedListOfReceived, inputSequence), subsequenceNotFound)
+                }
+              }
             }
             adda.awaitCompleted
             adda.shutdown
