@@ -18,9 +18,6 @@
 		<developerConnection>scm:git:${git.url}</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
-	<properties>
-		<scalatest.version>2.2.3</scalatest.version>
-	</properties>
 	<dependencyManagement>
 		<dependencies>
 		</dependencies>
@@ -29,7 +26,6 @@
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-stream-experimental_${scala.minor.version}</artifactId>
-			<version>1.0-M5</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -48,4 +44,7 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	<properties>
+		<akka.stream.version>1.0-M5</akka.stream.version>
+	</properties>
 </project>
