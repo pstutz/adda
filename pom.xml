@@ -10,6 +10,9 @@
 	<version>0.0.3-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>Adda</name>
+	<properties>
+		<akka.stream.version>1.0-M5</akka.stream.version>
+	</properties>
 	<!-- URL for site gen -->
 	<url>${ghe.url.base}/${project.artifactId}</url>
 	<scm>
@@ -44,7 +47,4 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-	<properties>
-		<akka.stream.version>1.0-M5</akka.stream.version>
-	</properties>
 </project>
