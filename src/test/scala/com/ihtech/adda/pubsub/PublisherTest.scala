@@ -1,17 +1,21 @@
 package com.ihtech.adda.pubsub
 
-import org.scalatest.{BeforeAndAfterAll, Finders, FlatSpec, Matchers}
+import scala.collection.immutable.Queue
 
-import com.ihtech.adda.TestConstants.{testQueue, testStreamElement}
+import org.scalatest.{ BeforeAndAfterAll, Finders, FlatSpec, Matchers }
+import org.scalatest.prop.Checkers
+
+import com.ihtech.adda.Generators.arbitraryStreamElement
+import com.ihtech.adda.TestConstants.successfulTest
 import com.ihtech.adda.TestHelpers.testSystem
 
-import akka.actor.{PoisonPill, Props, actorRef2Scala}
-import akka.stream.actor.ActorSubscriberMessage.{OnComplete, OnError}
-import akka.testkit.{EventFilter, TestActorRef, TestProbe}
+import akka.actor.{ PoisonPill, Props, actorRef2Scala }
+import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
+import akka.testkit.{ EventFilter, TestActorRef, TestProbe }
 
 case class TestException(msg: String) extends Exception(msg)
 
-class PublisherTest extends FlatSpec with Matchers with BeforeAndAfterAll {
+class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndAfterAll {
 
   implicit val system = testSystem(enableTestEventListener = true)
 
@@ -20,11 +24,14 @@ class PublisherTest extends FlatSpec with Matchers with BeforeAndAfterAll {
   }
 
   "Publisher actor" should "forward received stream elements to the broadcaster" in {
-    val broadcasterProbe = TestProbe()
-    val trackCompletion = false
-    val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
-    publisher ! testStreamElement
-    broadcasterProbe.expectMsg(testStreamElement)
+    check { (streamElement: OnNext) =>
+      val broadcasterProbe = TestProbe()
+      val trackCompletion = false
+      val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
+      publisher ! streamElement
+      broadcasterProbe.expectMsg(streamElement)
+      successfulTest
+    }
   }
 
   it should "log received errors in default mode" in {
@@ -38,13 +45,16 @@ class PublisherTest extends FlatSpec with Matchers with BeforeAndAfterAll {
   }
 
   it should "log received errors in queueing mode" in {
-    val broadcasterProbe = TestProbe()
-    val trackCompletion = false
-    val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
-    publisher ! testStreamElement
-    broadcasterProbe.expectMsg(testStreamElement)
-    EventFilter[TestException](occurrences = 1) intercept {
-      publisher ! OnError(TestException("Just testing."))
+    check { (streamElement: OnNext) =>
+      val broadcasterProbe = TestProbe()
+      val trackCompletion = false
+      val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
+      publisher ! streamElement
+      broadcasterProbe.expectMsg(streamElement)
+      EventFilter[TestException](occurrences = 1) intercept {
+        publisher ! OnError(TestException("Just testing."))
+      }
+      successfulTest
     }
   }
 
@@ -74,15 +84,27 @@ class PublisherTest extends FlatSpec with Matchers with BeforeAndAfterAll {
   }
 
   it should "queue elements and bulk send them to the broadcaster" in {
-    val broadcasterProbe = TestProbe()
-    val trackCompletion = false
-    val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
-    publisher ! testStreamElement
-    broadcasterProbe.expectMsg(testStreamElement)
-    publisher ! testStreamElement
-    publisher ! testStreamElement
-    publisher ! CanPublishNext
-    broadcasterProbe.expectMsg(testQueue)
+    check { (streamElements: List[OnNext]) =>
+      val broadcasterProbe = TestProbe()
+      val trackCompletion = false
+      val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
+      streamElements match {
+        case Nil =>
+        case firstElement :: remainingElements =>
+          publisher ! firstElement
+          broadcasterProbe.expectMsg(firstElement)
+          for { element <- remainingElements } {
+            publisher ! element
+          }
+          publisher ! CanPublishNext
+          remainingElements match {
+            case Nil               => broadcasterProbe.expectNoMsg()
+            case oneElement :: Nil => broadcasterProbe.expectMsg(oneElement)
+            case elements          => broadcasterProbe.expectMsg(Queue(remainingElements.map(_.element): _*))
+          }
+      }
+      successfulTest
+    }
   }
 
 }

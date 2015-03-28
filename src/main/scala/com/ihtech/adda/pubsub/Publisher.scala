@@ -38,12 +38,18 @@ class Publisher(
     case n @ OnNext(e) =>
       context.become(queuing(queued.enqueue(e)))
     case CanPublishNext =>
-      if (queued.isEmpty) {
-        unstashAll()
-        context.become(receive)
-      } else {
-        broadcaster ! queued
-        context.become(queuing(emptyQueue))
+      queued match {
+        case `emptyQueue` =>
+          unstashAll()
+          context.become(receive)
+        case Queue(singleElement) =>
+          // OnNext is a light-weight wrapper compared to Queue, which internally maintains two lists.
+          broadcaster ! OnNext(singleElement)
+          context.become(queuing(emptyQueue))
+        case longerQueue =>
+          // TODO:  Once we distribute the design, ensure Kryo serializes queues efficiently.
+          broadcaster ! longerQueue
+          context.become(queuing(emptyQueue))
       }
     case OnComplete =>
       stash()

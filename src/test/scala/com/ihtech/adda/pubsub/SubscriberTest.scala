@@ -1,17 +1,21 @@
 package com.ihtech.adda.pubsub
 
-import org.scalatest.{ BeforeAndAfterAll, Finders, FlatSpec, Matchers }
+import scala.collection.immutable.Queue
 
-import com.ihtech.adda.TestConstants.{ testQueue, testStreamElement, testString }
+import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers }
+import org.scalatest.prop.Checkers
+
+import com.ihtech.adda.TestConstants.successfulTest
 import com.ihtech.adda.TestHelpers.{ testSystem, verifyWithProbe }
 
 import akka.actor.{ Props, actorRef2Scala }
 import akka.stream.ActorFlowMaterializer
 import akka.stream.actor.ActorPublisher
+import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.testkit.StreamTestKit.SubscriberProbe
 
-class SubscriberTest extends FlatSpec with Matchers with BeforeAndAfterAll {
+class SubscriberTest extends FlatSpec with Checkers with Matchers with BeforeAndAfterAll {
 
   implicit val system = testSystem(enableTestEventListener = true)
   implicit val materializer = ActorFlowMaterializer()
@@ -21,25 +25,33 @@ class SubscriberTest extends FlatSpec with Matchers with BeforeAndAfterAll {
   }
 
   "Subscriber actor" should "stream received elements" in {
-    val streamProbe = SubscriberProbe[String]
-    val subscriber = system.actorOf(Props(new Subscriber[String]))
-    val source = Source(ActorPublisher[String](subscriber))
-    source.to(Sink(streamProbe)).run
-    subscriber ! testStreamElement
-    subscriber ! testStreamElement
-    subscriber ! Complete
-    verifyWithProbe(List(testString, testString), streamProbe)
+    check { (streamStrings: List[String]) =>
+      val streamProbe = SubscriberProbe[String]
+      val subscriber = system.actorOf(Props(new Subscriber[String]))
+      val source = Source(ActorPublisher[String](subscriber))
+      source.to(Sink(streamProbe)).run
+      for { streamElement <- streamStrings } {
+        subscriber ! OnNext(streamElement)
+      }
+      subscriber ! Complete
+      verifyWithProbe[String](streamStrings, streamProbe)
+      successfulTest
+    }
   }
 
   it should "stream received bulk elements" in {
-    val streamProbe = SubscriberProbe[String]
-    val subscriber = system.actorOf(Props(new Subscriber[String]))
-    val source = Source(ActorPublisher[String](subscriber))
-    source.to(Sink(streamProbe)).run
-    subscriber ! testQueue
-    subscriber ! testQueue
-    subscriber ! Complete
-    verifyWithProbe(List(testString, testString, testString, testString), streamProbe)
+    check { (streamStringLists: List[List[String]]) =>
+      val streamProbe = SubscriberProbe[String]
+      val subscriber = system.actorOf(Props(new Subscriber[String]))
+      val source = Source(ActorPublisher[String](subscriber))
+      source.to(Sink(streamProbe)).run
+      for { streamStringList <- streamStringLists } {
+        subscriber ! Queue(streamStringList: _*)
+      }
+      subscriber ! Complete
+      verifyWithProbe(streamStringLists.flatten, streamProbe)
+      successfulTest
+    }
   }
 
 }

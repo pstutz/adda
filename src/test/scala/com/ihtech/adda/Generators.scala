@@ -1,6 +1,9 @@
 package com.ihtech.adda
 
+import scala.collection.immutable.Queue
 import org.scalacheck.Gen
+import akka.stream.actor.ActorSubscriberMessage.OnNext
+import org.scalacheck.Arbitrary
 
 object Generators {
 
@@ -34,5 +37,19 @@ object Generators {
    * then the stream is not completed.
    */
   val genListOfStringPublishers = Gen.resize(maxPublisherCount, Gen.nonEmptyListOf(genStringPublisher))
+
+  /**
+   * Generates string stream messages.
+   */
+  val genStringStreamElement = Gen.alphaStr.map(OnNext(_))
+
+  implicit val arbitraryStreamElement = Arbitrary(genStringStreamElement)
+
+  /**
+   * Generates a queue of string stream messages.
+   */
+  val genStringStreamQueue = Gen.nonEmptyListOf(genStringStreamElement).map(Queue(_: _*))
+
+  implicit val arbitraryStreamQueue = Arbitrary(genStringStreamQueue)
 
 }
