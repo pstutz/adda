@@ -7,7 +7,7 @@ import scala.reflect.ClassTag
 import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers }
 import org.scalatest.prop.Checkers
 
-import com.ihtech.adda.Generators.arbitraryStreamElement
+import com.ihtech.adda.Generators.{ arbitraryStreamElement, arbitraryStreamQueue }
 import com.ihtech.adda.TestConstants.successfulTest
 import com.ihtech.adda.TestHelpers.testSystem
 
