@@ -1,14 +1,13 @@
 package com.ihtech.adda.pubsub
 
-import scala.collection.immutable.Queue
+import org.scalatest.{BeforeAndAfterAll, Finders, FlatSpec, Matchers}
 
-import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers }
-
+import com.ihtech.adda.TestConstants.{testQueue, testStreamElement}
 import com.ihtech.adda.TestHelpers.testSystem
 
-import akka.actor.{ PoisonPill, Props, actorRef2Scala }
-import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
-import akka.testkit.{ EventFilter, TestActorRef, TestProbe }
+import akka.actor.{PoisonPill, Props, actorRef2Scala}
+import akka.stream.actor.ActorSubscriberMessage.{OnComplete, OnError}
+import akka.testkit.{EventFilter, TestActorRef, TestProbe}
 
 case class TestException(msg: String) extends Exception(msg)
 
@@ -19,10 +18,6 @@ class PublisherTest extends FlatSpec with Matchers with BeforeAndAfterAll {
   override def afterAll: Unit = {
     system.shutdown
   }
-
-  private[this] val testString = "test"
-  private[this] val testStreamElement = OnNext(testString)
-  private[this] val testQueue = Queue[String](testString, testString)
 
   "Publisher actor" should "forward received stream elements to the broadcaster" in {
     val broadcasterProbe = TestProbe()
