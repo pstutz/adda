@@ -1,18 +1,19 @@
 package com.ihtech.adda.pubsub
 
+import scala.annotation.implicitNotFound
 import scala.collection.immutable.Queue
 import scala.reflect.ClassTag
 
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers }
 import org.scalatest.prop.Checkers
 
-import com.ihtech.adda.Generators.{arbitraryStreamElement, arbitraryStreamQueue}
+import com.ihtech.adda.Generators.arbitraryStreamElement
 import com.ihtech.adda.TestConstants.successfulTest
 import com.ihtech.adda.TestHelpers.testSystem
 
-import akka.actor.{ActorRef, ActorRefFactory, Props}
+import akka.actor.{ ActorRef, ActorRefFactory, Props, actorRef2Scala }
 import akka.stream.actor.ActorSubscriberMessage.OnNext
-import akka.testkit.{EventFilter, TestActorRef, TestProbe}
+import akka.testkit.{ EventFilter, TestProbe }
 
 class PublisherInjector(injectedActorRef: ActorRef, trackCompletion: Boolean)
   extends CreatePublisher(trackCompletion: Boolean) {
@@ -39,7 +40,7 @@ class BroadcasterTest extends FlatSpec with Checkers with Matchers with BeforeAn
 
   "Broadcaster actor" should "throw one exception when a handler fails on a single element" in {
     check { (streamElement: OnNext) =>
-      val broadcaster = TestActorRef(Props(new Broadcaster(List(failingHandler))))
+      val broadcaster = system.actorOf(Props(new Broadcaster(List(failingHandler))))
       EventFilter[TestException](occurrences = 1) intercept {
         broadcaster ! streamElement
       }
@@ -49,7 +50,7 @@ class BroadcasterTest extends FlatSpec with Checkers with Matchers with BeforeAn
 
   it should "throw one exception when a handler fails on elements of a queue" in {
     check { (streamQueue: Queue[OnNext]) =>
-      val broadcaster = TestActorRef(Props(new Broadcaster(List(failingHandler))))
+      val broadcaster = system.actorOf(Props(new Broadcaster(List(failingHandler))))
       EventFilter[TestException](occurrences = 1) intercept {
         broadcaster ! streamQueue
       }

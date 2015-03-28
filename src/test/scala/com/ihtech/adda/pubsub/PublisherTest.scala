@@ -2,16 +2,16 @@ package com.ihtech.adda.pubsub
 
 import scala.collection.immutable.Queue
 
-import org.scalatest.{ BeforeAndAfterAll, Finders, FlatSpec, Matchers }
+import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers }
 import org.scalatest.prop.Checkers
 
 import com.ihtech.adda.Generators.arbitraryStreamElement
 import com.ihtech.adda.TestConstants.successfulTest
 import com.ihtech.adda.TestHelpers.testSystem
 
-import akka.actor.{ PoisonPill, Props, actorRef2Scala }
+import akka.actor.{ Props, actorRef2Scala }
 import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
-import akka.testkit.{ EventFilter, TestActorRef, TestProbe }
+import akka.testkit.{ EventFilter, TestProbe }
 
 case class TestException(msg: String) extends Exception(msg)
 
@@ -41,7 +41,6 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
     EventFilter[TestException](occurrences = 1) intercept {
       publisher ! OnError(TestException("Just testing."))
     }
-    publisher ! PoisonPill
   }
 
   it should "log received errors in queueing mode" in {
@@ -67,7 +66,7 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
     }
   }
 
-  it should "report completion to broadcaster when tracking is enabled" in {
+  it should "report completion to the broadcaster when tracking is enabled" in {
     val broadcasterProbe = TestProbe()
     val trackCompletion = true
     val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
@@ -78,7 +77,7 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
   it should "not report completion to the broadcaster when tracking is disabled" in {
     val broadcasterProbe = TestProbe()
     val trackCompletion = false
-    val publisher = TestActorRef(new Publisher(trackCompletion, broadcasterProbe.ref))
+    val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
     publisher ! OnComplete
     broadcasterProbe.expectNoMsg()
   }
