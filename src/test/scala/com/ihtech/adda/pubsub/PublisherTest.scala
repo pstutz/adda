@@ -100,7 +100,7 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
           remainingElements match {
             case Nil               => broadcasterProbe.expectNoMsg()
             case oneElement :: Nil => broadcasterProbe.expectMsg(oneElement)
-            case elements          => broadcasterProbe.expectMsg(Queue(remainingElements.map(_.element): _*))
+            case elements: Any     => broadcasterProbe.expectMsg(Queue(remainingElements.map(_.element): _*))
           }
       }
       successfulTest

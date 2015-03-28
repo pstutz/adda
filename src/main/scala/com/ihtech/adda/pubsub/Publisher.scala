@@ -46,7 +46,7 @@ class Publisher(
           // OnNext is a light-weight wrapper compared to Queue, which internally maintains two lists.
           broadcaster ! OnNext(singleElement)
           context.become(queuing(emptyQueue))
-        case longerQueue =>
+        case longerQueue: Any =>
           // TODO:  Once we distribute the design, ensure Kryo serializes queues efficiently.
           broadcaster ! longerQueue
           context.become(queuing(emptyQueue))
