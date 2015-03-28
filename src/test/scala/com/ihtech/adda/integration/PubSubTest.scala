@@ -11,7 +11,7 @@ import org.scalatest.prop.Checkers
 import com.ihtech.adda.Adda
 import com.ihtech.adda.Generators.{ genListOfStringPublishers, genStringPublisher, genSubscriberCount }
 import com.ihtech.adda.TestConstants.successfulTest
-import com.ihtech.adda.TestHelpers.{ aggregateIntoList, aggregateIntoSet, containsSubsequence, testSystem, verifySingleSinkAndSourceFlow, verifyWithProbe }
+import com.ihtech.adda.TestHelpers.{ aggregateIntoList, aggregateIntoSet, containsSubsequence, verifySingleSinkAndSourceFlow, verifyWithProbe }
 
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.{ Sink, Source }
@@ -35,19 +35,24 @@ class PubSubTest extends AkkaSpec with Checkers with ScalaFutures {
       }
     }
 
-    "support single-publisher/single-subscriber scenarios for ints" in {
-      check { (strings: List[Int]) =>
+    "support single-publisher/single-subscriber scenarios for multiple types at the same time" in {
+      check { (ints: List[Int], doubles: List[Double], strings: List[String]) =>
         val adda = new Adda
-        verifySingleSinkAndSourceFlow(strings, adda)
-        adda.shutdown
-        successfulTest
-      }
-    }
-
-    "support single-publisher/single-subscriber scenarios for doubles" in {
-      check { (strings: List[Double]) =>
-        val adda = new Adda
-        verifySingleSinkAndSourceFlow(strings, adda)
+        val intProbe = SubscriberProbe[Int]
+        val doubleProbe = SubscriberProbe[Double]
+        val stringProbe = SubscriberProbe[String]
+        adda.subscribe[Int].to(Sink(intProbe)).run
+        adda.subscribe[Double].to(Sink(doubleProbe)).run
+        adda.subscribe[String].to(Sink(stringProbe)).run
+        val publishers = List(
+          Source(ints).to(adda.publish[Int]),
+          Source(doubles).to(adda.publish[Double]),
+          Source(strings).to(adda.publish[String]))
+        publishers.foreach(_.run)
+        verifyWithProbe(ints, intProbe)
+        verifyWithProbe(doubles, doubleProbe)
+        verifyWithProbe(strings, stringProbe)
+        adda.awaitCompleted
         adda.shutdown
         successfulTest
       }
