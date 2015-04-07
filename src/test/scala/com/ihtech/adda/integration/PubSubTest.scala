@@ -102,6 +102,19 @@ class PubSubTest extends AkkaSpec with Checkers with ScalaFutures {
       }
     }
 
+    "support multiple-publisher scenarios when the publishers are not tracked" in {
+      check {
+        Prop.forAll(genListOfStringPublishers) {
+          (listOfStringLists: List[List[String]]) =>
+            val adda = new Adda
+            val sources = listOfStringLists.map(Source(_).to(adda.publish[String](trackCompletion = false)))
+            sources.foreach(_.run)
+            adda.shutdown
+            successfulTest
+        }
+      }
+    }
+
     "support multiple-publishers/multiple-subscribers scenarios for strings" in {
       check {
         Prop.forAll(genListOfStringPublishers, genSubscriberCount) {

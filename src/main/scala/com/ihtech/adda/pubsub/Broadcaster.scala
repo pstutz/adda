@@ -70,7 +70,12 @@ class Broadcaster(
   def createPublisher(creationRequest: CreatePublisher, pubSub: PubSubManager): Unit = {
     val publisher = creationRequest.createPublisher(context, pubSub.nextUniqueActorId, self)
     sender ! publisher
-    if (creationRequest.trackCompletion) context.become(broadcaster(pubSub.addPublisher(publisher)))
+    if (creationRequest.trackCompletion) {
+      context.become(broadcaster(pubSub.addPublisher(publisher)))
+    } else {
+      // Manually increment next unique actor ID.
+      context.become(broadcaster(pubSub.copy(nextUniqueActorId = pubSub.nextUniqueActorId + 1)))
+    }
   }
 
   def createSubscriber(creationRequest: CreateSubscriber[_], pubSub: PubSubManager): Unit = {
