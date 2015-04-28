@@ -25,7 +25,7 @@ object FlowControl {
  */
 class Publisher(
   val trackCompletion: Boolean,
-  val broadcaster: ActorRef) extends ActorSubscriber with ActorLogging with Stash {
+  val broadcaster: ActorRef) extends ActorSubscriber with ActorLogging {
 
   private[this] val emptyQueue = Queue.empty[Any]
 
@@ -34,42 +34,47 @@ class Publisher(
   /**
    * Receive function that queues received elements whilst waiting for `CanPublishNext'.
    */
-  def queuing(queued: Queue[Any]): Actor.Receive = LoggingReceive {
+  def queuing(queued: Queue[Any], completed: Boolean, canPublishNext: Boolean): Actor.Receive = LoggingReceive {
     case n @ OnNext(e) =>
-      context.become(queuing(queued.enqueue(e)))
+      if (canPublishNext) {
+        broadcaster ! n
+        context.become(queuing(emptyQueue, false, false))
+      } else {
+        context.become(queuing(queued.enqueue(e), false, false))
+      }
     case CanPublishNext =>
       queued match {
         case `emptyQueue` =>
-          unstashAll()
-          context.become(receive)
+          if (completed) {
+            handleCompletion
+          } else {
+            context.become(queuing(emptyQueue, false, true))
+          }
         case Queue(singleElement) =>
           // OnNext is a light-weight wrapper compared to Queue, which internally maintains two lists.
           broadcaster ! OnNext(singleElement)
-          context.become(queuing(emptyQueue))
+          context.become(queuing(emptyQueue, completed, false))
         case longerQueue: Any =>
           // TODO:  Once we distribute the design, ensure Kryo serializes queues efficiently.
           broadcaster ! longerQueue
-          context.become(queuing(emptyQueue))
+          context.become(queuing(emptyQueue, completed, false))
       }
     case OnComplete =>
-      stash()
+      if (canPublishNext) {
+        handleCompletion
+      } else {
+        context.become(queuing(queued, true, false))
+      }
     case OnError(e) =>
       reportError(e)
   }
 
-  def receive: Actor.Receive = LoggingReceive {
-    case n @ OnNext(e) =>
-      broadcaster ! n
-      context.become(queuing(emptyQueue))
-    case CanPublishNext =>
-      val msg = "Publisher received CanPublishNext, but was not in queueing mode."
-      log.error(new IllegalActorState(msg), msg)
-    case OnComplete =>
-      if (trackCompletion) broadcaster ! Completed
-      context.stop(self)
-    case OnError(e) =>
-      reportError(e)
+  def handleCompletion: Unit = {
+    if (trackCompletion) broadcaster ! Completed
+    context.stop(self)
   }
+
+  def receive: Actor.Receive = queuing(emptyQueue, false, true)
 
   def reportError(e: Throwable): Unit = {
     log.error(e, s"Adda sink received error ${e.getMessage} from $sender.")
