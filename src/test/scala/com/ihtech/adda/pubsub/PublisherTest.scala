@@ -23,7 +23,19 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
     system.shutdown
   }
 
-  "Publisher actor" should "forward received stream elements to the broadcaster" in {
+  "Publisher actor" should "forward a received string and complete the stream" in {
+    val broadcasterProbe = TestProbe()
+    val trackCompletion = true
+    val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
+    val emptyStringMsg = OnNext("")
+    publisher ! emptyStringMsg
+    broadcasterProbe.expectMsg(emptyStringMsg)
+    publisher ! OnComplete
+    publisher ! CanPublishNext
+    broadcasterProbe.expectMsg(Completed)
+  }
+
+  it should "forward received stream elements to the broadcaster" in {
     check { (streamElement: OnNext) =>
       val broadcasterProbe = TestProbe()
       val trackCompletion = false
@@ -54,15 +66,6 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
         publisher ! OnError(TestException("Just testing."))
       }
       successfulTest
-    }
-  }
-
-  it should "throw an exception when it receives CanSendNext whilst not in queuing mode" in {
-    val broadcasterProbe = TestProbe()
-    val trackCompletion = false
-    val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
-    EventFilter[IllegalActorState](occurrences = 1) intercept {
-      broadcasterProbe.send(publisher, CanPublishNext)
     }
   }
 

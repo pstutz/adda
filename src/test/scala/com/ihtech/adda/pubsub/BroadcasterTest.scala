@@ -1,10 +1,9 @@
 package com.ihtech.adda.pubsub
 
-import scala.annotation.implicitNotFound
 import scala.collection.immutable.Queue
 import scala.reflect.ClassTag
 
-import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers }
+import org.scalatest.{ BeforeAndAfterAll, Finders, FlatSpec, Matchers }
 import org.scalatest.prop.Checkers
 
 import com.ihtech.adda.Generators.{ arbitraryStreamElement, arbitraryStreamQueue }
