@@ -39,7 +39,7 @@ class PubSubTest extends FlatSpec with Checkers with ScalaFutures {
     verifySingleSinkAndSourceFlow[String](List("a"), adda)
     adda.shutdown
   }
-  
+
   it should "support single-publisher/single-subscriber scenarios for strings" in {
     check { (strings: List[String]) =>
       val adda = new Adda

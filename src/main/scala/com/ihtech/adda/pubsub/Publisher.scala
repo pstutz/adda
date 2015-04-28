@@ -41,22 +41,7 @@ class Publisher(
         context.become(queuing(queued.enqueue(e), false, false))
       }
     case CanPublishNext =>
-      queued match {
-        case `emptyQueue` =>
-          if (completed) {
-            handleCompletion
-          } else {
-            context.become(queuing(emptyQueue, false, true))
-          }
-        case Queue(singleElement) =>
-          // OnNext is a light-weight wrapper compared to Queue, which internally maintains two lists.
-          broadcaster ! OnNext(singleElement)
-          context.become(queuing(emptyQueue, completed, false))
-        case longerQueue: Any =>
-          // TODO:  Once we distribute the design, ensure Kryo serializes queues efficiently.
-          broadcaster ! longerQueue
-          context.become(queuing(emptyQueue, completed, false))
-      }
+      publishNext(queued, completed)
     case OnComplete =>
       if (canPublishNext) {
         handleCompletion
@@ -65,6 +50,25 @@ class Publisher(
       }
     case OnError(e) =>
       reportError(e)
+  }
+
+  def publishNext(queued: Queue[Any], completed: Boolean): Unit = {
+    queued match {
+      case `emptyQueue` =>
+        if (completed) {
+          handleCompletion
+        } else {
+          context.become(queuing(emptyQueue, false, true))
+        }
+      case Queue(singleElement) =>
+        // OnNext is a light-weight wrapper compared to Queue, which internally maintains two lists.
+        broadcaster ! OnNext(singleElement)
+        context.become(queuing(emptyQueue, completed, false))
+      case longerQueue: Any =>
+        // TODO:  Once we distribute the design, ensure Kryo serializes queues efficiently.
+        broadcaster ! longerQueue
+        context.become(queuing(emptyQueue, completed, false))
+    }
   }
 
   def handleCompletion(): Unit = {
