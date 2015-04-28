@@ -9,7 +9,8 @@ import com.typesafe.config.ConfigFactory
 import akka.actor.ActorSystem
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.{ Sink, Source }
-import akka.stream.testkit.StreamTestKit.SubscriberProbe
+import akka.stream.testkit.TestSubscriber
+import akka.stream.testkit.TestSubscriber.manualProbe
 
 object TestHelpers {
 
@@ -28,6 +29,7 @@ object TestHelpers {
       |  log-dead-letters = off
       |  log-dead-letters-during-shutdown = off
       |  actor.debug.receive = off
+      |  akka.actor.debug.lifecycle = off
       |}
     """.stripMargin))
   }
@@ -57,7 +59,7 @@ object TestHelpers {
    */
   def verifySingleSinkAndSourceFlow[C: ClassTag](l: List[C], adda: Adda)(implicit system: ActorSystem): Boolean = {
     implicit val materializer = ActorFlowMaterializer()
-    val probe = SubscriberProbe[C]
+    val probe = manualProbe[C]
     adda.subscribe[C].to(Sink(probe)).run
     Source(l).to(adda.publish[C]).run
     verifyWithProbe(l, probe)
@@ -68,12 +70,10 @@ object TestHelpers {
   /**
    * Verifies that the probe receives the items in `l' and that the stream completes afterwards.
    */
-  def verifyWithProbe[C](l: List[C], probe: SubscriberProbe[C]): Unit = {
+  def verifyWithProbe[C](l: List[C], probe: TestSubscriber.ManualProbe[C]): Unit = {
     val itemsRequested = math.max(probeMinItemsRequested, l.length)
     probe.expectSubscription().request(itemsRequested)
-    for { next <- l } {
-      probe.expectNext(next)
-    }
+    probe.expectNextN(l)
     probe.expectComplete
   }
 

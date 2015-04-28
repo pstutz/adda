@@ -7,7 +7,8 @@ import com.ihtech.adda.Adda
 import com.ihtech.adda.TestHelpers.verifyWithProbe
 
 import akka.stream.scaladsl.{ Sink, Source }
-import akka.stream.testkit.StreamTestKit.SubscriberProbe
+import akka.stream.testkit.TestSubscriber.manualProbe
+
 
 /**
  * This simple example shows how one can use Adda to publish a list of
@@ -21,7 +22,7 @@ class CharFlowExample extends FlatSpec with Matchers with Checkers {
       val adda = new Adda
       implicit val system = adda.system
       implicit val materializer = adda.materializer
-      val probes = List(SubscriberProbe[Char], SubscriberProbe[Char])
+      val probes = List(manualProbe[Char], manualProbe[Char])
       probes.foreach(probe => adda.subscribe[Char].to(Sink(probe)).run())
       Source(chars).to(adda.publish[Char]).run()
       probes.foreach(verifyWithProbe(chars, _))

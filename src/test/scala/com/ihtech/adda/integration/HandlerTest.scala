@@ -2,12 +2,10 @@ package com.ihtech.adda
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatest.{ Finders, FlatSpec, Matchers }
 
-import akka.actor.ActorSystem
-import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.{ Sink, Source }
-import akka.stream.testkit.StreamTestKit
+import akka.stream.testkit.TestSubscriber.manualProbe
 
 class HandlerTest extends FlatSpec with Matchers {
 
@@ -28,7 +26,7 @@ class HandlerTest extends FlatSpec with Matchers {
 
     val elements = 1000000
 
-    val probe = StreamTestKit.SubscriberProbe[Int]
+    val probe = manualProbe[Int]
     val in = Source(1 to elements).to(adda.publish[Int])
     val out = adda.subscribe[Int].to(Sink(probe))
     out.run

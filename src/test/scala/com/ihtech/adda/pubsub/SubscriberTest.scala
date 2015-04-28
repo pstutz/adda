@@ -2,7 +2,7 @@ package com.ihtech.adda.pubsub
 
 import scala.collection.immutable.Queue
 
-import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers }
+import org.scalatest.{ BeforeAndAfterAll, Finders, FlatSpec, Matchers }
 import org.scalatest.prop.Checkers
 
 import com.ihtech.adda.TestConstants.successfulTest
@@ -13,7 +13,7 @@ import akka.stream.ActorFlowMaterializer
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.stream.scaladsl.{ Sink, Source }
-import akka.stream.testkit.StreamTestKit.SubscriberProbe
+import akka.stream.testkit.TestSubscriber.manualProbe
 
 class SubscriberTest extends FlatSpec with Checkers with Matchers with BeforeAndAfterAll {
 
@@ -24,9 +24,19 @@ class SubscriberTest extends FlatSpec with Checkers with Matchers with BeforeAnd
     system.shutdown
   }
 
-  "Subscriber actor" should "stream received elements" in {
+  "Subscriber actor" should "stream a received empty string" in {
+    val streamProbe = manualProbe[String]
+    val subscriber = system.actorOf(Props(new Subscriber[String]))
+    val source = Source(ActorPublisher[String](subscriber))
+    source.to(Sink(streamProbe)).run
+    subscriber ! OnNext("")
+    subscriber ! Complete
+    verifyWithProbe[String](List(""), streamProbe)
+  }
+
+  it should "stream received elements" in {
     check { (streamStrings: List[String]) =>
-      val streamProbe = SubscriberProbe[String]
+      val streamProbe = manualProbe[String]
       val subscriber = system.actorOf(Props(new Subscriber[String]))
       val source = Source(ActorPublisher[String](subscriber))
       source.to(Sink(streamProbe)).run
@@ -41,7 +51,7 @@ class SubscriberTest extends FlatSpec with Checkers with Matchers with BeforeAnd
 
   it should "stream received bulk elements" in {
     check { (streamStringLists: List[List[String]]) =>
-      val streamProbe = SubscriberProbe[String]
+      val streamProbe = manualProbe[String]
       val subscriber = system.actorOf(Props(new Subscriber[String]))
       val source = Source(ActorPublisher[String](subscriber))
       source.to(Sink(streamProbe)).run
