@@ -4,7 +4,7 @@ import scala.collection.immutable.Queue
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 
-import akka.actor.{ Actor, ActorLogging, Stash }
+import akka.actor.{ Actor, ActorLogging }
 import akka.event.LoggingReceive
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.{ Cancel, Request }

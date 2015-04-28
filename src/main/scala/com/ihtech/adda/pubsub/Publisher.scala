@@ -2,7 +2,7 @@ package com.ihtech.adda.pubsub
 
 import scala.collection.immutable.Queue
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Stash, actorRef2Scala }
+import akka.actor.{ Actor, ActorLogging, ActorRef, actorRef2Scala }
 import akka.event.LoggingReceive
 import akka.stream.actor.{ RequestStrategy, WatermarkRequestStrategy }
 import akka.stream.actor.ActorSubscriber
