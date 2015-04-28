@@ -46,7 +46,7 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
     }
   }
 
-  it should "log received errors in default mode" in {
+  it should "log received errors when no elements are queued" in {
     val broadcasterProbe = TestProbe()
     val trackCompletion = false
     val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
@@ -55,7 +55,7 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
     }
   }
 
-  it should "log received errors in queueing mode" in {
+  it should "log received errors when elements are queued" in {
     check { (streamElement: OnNext) =>
       val broadcasterProbe = TestProbe()
       val trackCompletion = false

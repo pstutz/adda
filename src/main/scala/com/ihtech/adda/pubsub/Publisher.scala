@@ -8,8 +8,6 @@ import akka.stream.actor.{ RequestStrategy, WatermarkRequestStrategy }
 import akka.stream.actor.ActorSubscriber
 import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
 
-case class IllegalActorState(msg: String) extends Exception(msg)
-
 object FlowControl {
   private[this] val highWatermark = 50
   val requestStrategy: RequestStrategy = WatermarkRequestStrategy(highWatermark)
@@ -69,7 +67,7 @@ class Publisher(
       reportError(e)
   }
 
-  def handleCompletion: Unit = {
+  def handleCompletion(): Unit = {
     if (trackCompletion) broadcaster ! Completed
     context.stop(self)
   }
