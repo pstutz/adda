@@ -26,7 +26,9 @@ import akka.stream.testkit.TestSubscriber.manualProbe
 class PubSubTest extends FlatSpec with Checkers with ScalaFutures {
   implicit val system = ActorSystem("Test")
   implicit val materializer = ActorFlowMaterializer()
-  implicit override val patienceConfig = PatienceConfig(timeout = Span(10, Seconds), interval = Span(15, Millis))
+  private[this] val span = 10
+  private[this] val interval = 15
+  implicit override val patienceConfig = PatienceConfig(timeout = Span(span, Seconds), interval = Span(interval, Millis))
 
   private[this] val subsequenceNotFound =
     "Sequence published by one of the publishers was not a subsequence of the sequence received by the subscriber."
