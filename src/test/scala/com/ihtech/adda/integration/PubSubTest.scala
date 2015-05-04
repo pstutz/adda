@@ -1,5 +1,7 @@
 package com.ihtech.adda.integration
 
+import org.scalatest.time.{Millis, Seconds, Span}
+
 import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -24,6 +26,7 @@ import akka.stream.testkit.TestSubscriber.manualProbe
 class PubSubTest extends FlatSpec with Checkers with ScalaFutures {
   implicit val system = ActorSystem("Test")
   implicit val materializer = ActorFlowMaterializer()
+  implicit override val patienceConfig = PatienceConfig(timeout = Span(10, Seconds), interval = Span(15, Millis))
 
   private[this] val subsequenceNotFound =
     "Sequence published by one of the publishers was not a subsequence of the sequence received by the subscriber."
