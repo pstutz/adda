@@ -10,10 +10,6 @@
 	<version>0.0.4-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>Adda</name>
-	<properties>
-		<akka.stream.version>1.0-RC1</akka.stream.version>
-		<akka.version>2.3.10</akka.version>
-	</properties>
 	<!-- URL for site gen -->
 	<url>${ghe.url.base}/${project.artifactId}</url>
 	<scm>
@@ -34,7 +30,6 @@
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-stream-testkit-experimental_${scala.minor.version}</artifactId>
-			<version>${akka.stream.version}</version> <!-- TODO Migrate to higher dependencyManagement eventually -->
 			<scope>test</scope>
 		</dependency>
 		<dependency>
