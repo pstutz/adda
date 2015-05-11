@@ -16,8 +16,8 @@ Not yet. Adda builds on Akka and we'd like to explore to what degree Akka featur
 # Types vs. topics: What am I publishing and what am I subscribing to? 
 // TODO
 
-# Does Akka Streams backpressure work across Adda?
-No.
+# Does backpressure work across Adda?
+No, not yet, but it would be a nice feature.
 
 # What happens when a subscriber fails to consume the messages fast enough? 
 The in-memory queue will grow and the application will eventually run out of memory.
