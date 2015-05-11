@@ -16,20 +16,16 @@ Not yet. Adda builds on Akka and we'd like to explore to what degree Akka featur
 # Types vs. topics: What am I publishing and what am I subscribing to? 
 // TODO
 
-# Types vs. topics: What am I publishing and what am I subscribing to? 
-// TODO
+# Does Akka Streams backpressure work across Adda?
+No.
 
 # What happens when a subscriber fails to consume the messages fast enough? 
-// TODO: We should address this case.
-The in-memory queue will grow and the application will eventually run out of memory.  
-
-# Does Akka Streams backpressure work across Adda?
-Not yet. 
+The in-memory queue will grow and the application will eventually run out of memory.
+// TODO: We should address this case either by supporting backpressure or by disconnecting slow subscribers.
 
 # How does Adda scale?
 Each type is handled by its own network of actors, one actor per type and one actor for each subscriber and publisher.
  
-# How does Adda compare to Kafka?
-//TODO: Improve.
-Adda currenlty runs inside of the same JVM as your application and directly integrates with Akka Streams.
+# How does Adda compare to (reactive) Kafka?
+Adda runs embedded in the JVM of your application and directly integrates with Akka Streams.
 It does not support any of the persistence and distributed scalability features that Kafka supports.  
