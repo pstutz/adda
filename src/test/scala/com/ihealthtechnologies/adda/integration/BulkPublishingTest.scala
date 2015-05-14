@@ -1,8 +1,8 @@
-package com.ihtech.adda.integration
+package com.ihealthtechnologies.adda.integration
 
 import org.scalatest.{ Finders, FlatSpec, Matchers }
 
-import com.ihtech.adda.Adda
+import com.ihealthtechnologies.adda.Adda
 
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.testkit.TestSubscriber.manualProbe

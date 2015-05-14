@@ -1,4 +1,4 @@
-package com.ihtech.adda.pubsub
+package com.ihealthtechnologies.adda.pubsub
 
 import scala.collection.immutable.Queue
 import scala.language.postfixOps

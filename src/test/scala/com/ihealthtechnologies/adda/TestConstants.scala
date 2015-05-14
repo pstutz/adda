@@ -1,4 +1,4 @@
-package com.ihtech.adda
+package com.ihealthtechnologies.adda
 
 object TestConstants {
 

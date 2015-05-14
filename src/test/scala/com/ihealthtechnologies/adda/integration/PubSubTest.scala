@@ -1,4 +1,4 @@
-package com.ihtech.adda.integration
+package com.ihealthtechnologies.adda.integration
 
 import org.scalatest.time.{Millis, Seconds, Span}
 
@@ -13,10 +13,10 @@ import org.scalatest.Matchers.{ be, convertToAnyShouldWrapper }
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.Checkers
 
-import com.ihtech.adda.Adda
-import com.ihtech.adda.Generators.{ genListOfStringPublishers, genStringPublisher, genSubscriberCount }
-import com.ihtech.adda.TestConstants.successfulTest
-import com.ihtech.adda.TestHelpers._
+import com.ihealthtechnologies.adda.Adda
+import com.ihealthtechnologies.adda.Generators.{ genListOfStringPublishers, genStringPublisher, genSubscriberCount }
+import com.ihealthtechnologies.adda.TestConstants.successfulTest
+import com.ihealthtechnologies.adda.TestHelpers._
 
 import akka.actor.ActorSystem
 import akka.stream.ActorFlowMaterializer

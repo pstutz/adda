@@ -1,4 +1,4 @@
-package com.ihtech.adda.interfaces
+package com.ihealthtechnologies.adda.interfaces
 
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag

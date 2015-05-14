@@ -1,11 +1,11 @@
-package com.ihtech.adda
+package com.ihealthtechnologies.adda
 
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
 
-import com.ihtech.adda.interfaces.PubSub
-import com.ihtech.adda.pubsub.{ AwaitCompleted, Broadcaster, CreatePublisher, CreateSubscriber }
+import com.ihealthtechnologies.adda.interfaces.PubSub
+import com.ihealthtechnologies.adda.pubsub.{ AwaitCompleted, Broadcaster, CreatePublisher, CreateSubscriber }
 
 import akka.actor.{ ActorRef, ActorSystem, Props }
 import akka.event.Logging

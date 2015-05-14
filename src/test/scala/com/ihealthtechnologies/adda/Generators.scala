@@ -1,4 +1,4 @@
-package com.ihtech.adda
+package com.ihealthtechnologies.adda
 
 import scala.collection.immutable.Queue
 import org.scalacheck.Gen

@@ -1,10 +1,10 @@
-package com.ihtech.adda.examples
+package com.ihealthtechnologies.adda.examples
 
 import org.scalatest.{ FlatSpec, Matchers }
 import org.scalatest.prop.Checkers
 
-import com.ihtech.adda.Adda
-import com.ihtech.adda.TestHelpers.verifyWithProbe
+import com.ihealthtechnologies.adda.Adda
+import com.ihealthtechnologies.adda.TestHelpers.verifyWithProbe
 
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.testkit.TestSubscriber.manualProbe

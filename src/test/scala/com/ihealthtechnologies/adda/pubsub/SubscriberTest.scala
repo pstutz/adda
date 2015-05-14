@@ -1,14 +1,17 @@
-package com.ihtech.adda.pubsub
+package com.ihealthtechnologies.adda.pubsub
 
 import scala.collection.immutable.Queue
 
 import org.scalatest.{ BeforeAndAfterAll, Finders, FlatSpec, Matchers }
+
 import org.scalatest.prop.Checkers
 
-import com.ihtech.adda.TestConstants.successfulTest
-import com.ihtech.adda.TestHelpers.{ testSystem, verifyWithProbe }
+import com.ihealthtechnologies.adda.pubsub.Complete;
+import com.ihealthtechnologies.adda.TestConstants.successfulTest
+import com.ihealthtechnologies.adda.TestHelpers.{ testSystem, verifyWithProbe }
 
 import akka.actor.{ Props, actorRef2Scala }
+
 import akka.stream.ActorFlowMaterializer
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorSubscriberMessage.OnNext

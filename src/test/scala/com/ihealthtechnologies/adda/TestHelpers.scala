@@ -1,9 +1,9 @@
-package com.ihtech.adda
+package com.ihealthtechnologies.adda
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 
-import com.ihtech.adda.TestConstants.{ probeMinItemsRequested, successfulTest }
+import com.ihealthtechnologies.adda.TestConstants.{ probeMinItemsRequested, successfulTest }
 import com.typesafe.config.ConfigFactory
 
 import akka.actor.ActorSystem

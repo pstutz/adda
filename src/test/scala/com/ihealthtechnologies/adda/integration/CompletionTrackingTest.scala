@@ -1,11 +1,11 @@
-package com.ihtech.adda
+package com.ihealthtechnologies.adda.integration
 
 import org.scalatest.{ Finders, FlatSpec, Matchers }
-
 import akka.actor.ActorSystem
 import akka.stream.ActorFlowMaterializer
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.testkit.TestSubscriber.manualProbe
+import com.ihealthtechnologies.adda.Adda
 
 class CompletionTrackingTest extends FlatSpec with Matchers {
 
