@@ -3,20 +3,14 @@ package com.ihealthtechnologies.adda.pubsub
 import scala.collection.immutable.Queue
 import scala.reflect.ClassTag
 
-import org.scalatest.{ BeforeAndAfterAll, Finders, FlatSpec, Matchers }
-
+import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers }
 import org.scalatest.prop.Checkers
 
 import com.ihealthtechnologies.adda.Generators.{ arbitraryStreamElement, arbitraryStreamQueue }
-
-import com.ihealthtechnologies.adda.pubsub.Broadcaster;
-import com.ihealthtechnologies.adda.pubsub.CanPublishNext;
-import com.ihealthtechnologies.adda.pubsub.CreatePublisher;
 import com.ihealthtechnologies.adda.TestConstants.successfulTest
 import com.ihealthtechnologies.adda.TestHelpers.testSystem
 
 import akka.actor.{ ActorRef, ActorRefFactory, Props, actorRef2Scala }
-
 import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.testkit.{ EventFilter, TestProbe }
 
