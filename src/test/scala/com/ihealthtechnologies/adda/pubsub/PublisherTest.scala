@@ -3,12 +3,8 @@ package com.ihealthtechnologies.adda.pubsub
 import scala.collection.immutable.Queue
 
 import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers }
-
 import org.scalatest.prop.Checkers
 
-import com.ihealthtechnologies.adda.pubsub.CanPublishNext;
-import com.ihealthtechnologies.adda.pubsub.Completed;
-import com.ihealthtechnologies.adda.pubsub.Publisher;
 import com.ihealthtechnologies.adda.Generators.arbitraryStreamElement
 import com.ihealthtechnologies.adda.TestConstants.successfulTest
 import com.ihealthtechnologies.adda.TestHelpers.testSystem
