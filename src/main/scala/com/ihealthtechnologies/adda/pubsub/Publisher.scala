@@ -23,7 +23,8 @@ object FlowControl {
  */
 class Publisher(
   val trackCompletion: Boolean,
-  val broadcaster: ActorRef) extends ActorSubscriber with ActorLogging {
+  val broadcaster: ActorRef,
+  val MaxQueueSize: Int = 100000) extends ActorSubscriber with ActorLogging {
 
   private[this] val emptyQueue = Queue.empty[Any]
 
@@ -38,6 +39,9 @@ class Publisher(
         broadcaster ! n
         context.become(queuing(emptyQueue, false, false))
       } else {
+        while(queued.size > MaxQueueSize){
+          //wait or block until the queue goes back to zero or empty sized.
+        }
         context.become(queuing(queued.enqueue(e), false, false))
       }
     case CanPublishNext =>
