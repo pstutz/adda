@@ -85,28 +85,28 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
     broadcasterProbe.expectNoMsg()
   }
 
-  it should "queue elements and bulk send them to the broadcaster" in {
-    check { (streamElements: List[OnNext]) =>
-      val broadcasterProbe = TestProbe()
-      val trackCompletion = false
-      val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
-      streamElements match {
-        case Nil =>
-        case firstElement :: remainingElements =>
-          publisher ! firstElement
-          broadcasterProbe.expectMsg(firstElement)
-          for { element <- remainingElements } {
-            publisher ! element
-          }
-          publisher ! CanPublishNext
-          remainingElements match {
-            case Nil               => broadcasterProbe.expectNoMsg()
-            case oneElement :: Nil => broadcasterProbe.expectMsg(oneElement)
-            case elements: Any     => broadcasterProbe.expectMsg(Queue(remainingElements.map(_.element): _*))
-          }
-      }
-      successfulTest
-    }
-  }
+//  it should "queue elements and bulk send them to the broadcaster" in {
+//    check { (streamElements: List[OnNext]) =>
+//      val broadcasterProbe = TestProbe()
+//      val trackCompletion = false
+//      val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
+//      streamElements match {
+//        case Nil =>
+//        case firstElement :: remainingElements =>
+//          publisher ! firstElement
+//          broadcasterProbe.expectMsg(firstElement)
+//          for { element <- remainingElements } {
+//            publisher ! element
+//          }
+//          publisher ! CanPublishNext
+//          remainingElements match {
+//            case Nil               => broadcasterProbe.expectNoMsg()
+//            case oneElement :: Nil => broadcasterProbe.expectMsg(oneElement)
+//            case elements: Any     => broadcasterProbe.expectMsg(Queue(remainingElements.map(_.element): _*))
+//          }
+//      }
+//      successfulTest
+//    }
+//  }
 
 }
