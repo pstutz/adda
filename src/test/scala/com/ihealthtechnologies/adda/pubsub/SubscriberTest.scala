@@ -9,7 +9,7 @@ import com.ihealthtechnologies.adda.TestConstants.successfulTest
 import com.ihealthtechnologies.adda.TestHelpers.{ testSystem, verifyWithProbe }
 
 import akka.actor.{ Props, actorRef2Scala }
-import akka.stream.ActorFlowMaterializer
+import akka.stream.ActorMaterializer
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.stream.scaladsl.{ Sink, Source }
@@ -18,7 +18,7 @@ import akka.stream.testkit.TestSubscriber.manualProbe
 class SubscriberTest extends FlatSpec with Checkers with Matchers with BeforeAndAfterAll {
 
   implicit val system = testSystem(enableTestEventListener = true)
-  implicit val materializer = ActorFlowMaterializer()
+  implicit val materializer = ActorMaterializer()
 
   override def afterAll: Unit = {
     system.shutdown

@@ -10,7 +10,7 @@ import com.ihealthtechnologies.adda.pubsub.{ AwaitCompleted, Broadcaster, Create
 import akka.actor.{ ActorRef, ActorSystem, Props }
 import akka.event.Logging
 import akka.pattern.ask
-import akka.stream.ActorFlowMaterializer
+import akka.stream.ActorMaterializer
 import akka.stream.actor.{ ActorPublisher, ActorSubscriber }
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.util.Timeout
@@ -32,7 +32,7 @@ class Adda(
 
   private[this] val broadcasterForTopic = collection.mutable.Map.empty[String, ActorRef]
 
-  implicit val materializer = ActorFlowMaterializer()
+  implicit val materializer = ActorMaterializer()
   implicit val executor = system.dispatcher
   private[this] val log = Logging.getLogger(system.eventStream, Adda.defaultSystemName)
 

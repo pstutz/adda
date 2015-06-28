@@ -19,13 +19,13 @@ import com.ihealthtechnologies.adda.TestConstants.successfulTest
 import com.ihealthtechnologies.adda.TestHelpers._
 
 import akka.actor.ActorSystem
-import akka.stream.ActorFlowMaterializer
+import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.testkit.TestSubscriber.manualProbe
 
 class PubSubTest extends FlatSpec with Checkers with ScalaFutures {
   implicit val system = ActorSystem("Test")
-  implicit val materializer = ActorFlowMaterializer()
+  implicit val materializer = ActorMaterializer()
   private[this] val span = 10
   private[this] val interval = 15
   implicit override val patienceConfig = PatienceConfig(timeout = Span(span, Seconds), interval = Span(interval, Millis))

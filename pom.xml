@@ -25,10 +25,12 @@
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-stream-experimental_${scala.minor.version}</artifactId>
+			<version>1.0-RC4</version>
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-stream-testkit-experimental_${scala.minor.version}</artifactId>
+			<version>1.0-RC4</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

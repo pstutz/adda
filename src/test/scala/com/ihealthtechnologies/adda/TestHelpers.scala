@@ -7,7 +7,7 @@ import com.ihealthtechnologies.adda.TestConstants.{ probeMinItemsRequested, succ
 import com.typesafe.config.ConfigFactory
 
 import akka.actor.ActorSystem
-import akka.stream.ActorFlowMaterializer
+import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.testkit.TestSubscriber
 import akka.stream.testkit.TestSubscriber.manualProbe
@@ -58,7 +58,7 @@ object TestHelpers {
    * Verifies that a sink receives the elements in `l', when they are streamed into Adda by a source.
    */
   def verifySingleSinkAndSourceFlow[C: ClassTag](l: List[C], adda: Adda)(implicit system: ActorSystem): Boolean = {
-    implicit val materializer = ActorFlowMaterializer()
+    implicit val materializer = ActorMaterializer()
     val probe = manualProbe[C]
     adda.subscribe[C].to(Sink(probe)).run
     Source(l).to(adda.publish[C]).run
