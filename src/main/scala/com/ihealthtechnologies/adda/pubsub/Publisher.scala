@@ -1,5 +1,10 @@
 package com.ihealthtechnologies.adda.pubsub
 
+import akka.util.Timeout
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import akka.pattern.ask
+
 import scala.collection.immutable.Queue
 
 import akka.actor.{ Actor, ActorLogging, ActorRef, actorRef2Scala }
@@ -36,12 +41,12 @@ class Publisher(
   def queuing(queued: Queue[Any], completed: Boolean, canPublishNext: Boolean): Actor.Receive = LoggingReceive {
     case n @ OnNext(e) =>
       if (canPublishNext) {
-        broadcaster ! n
+        implicit val timeout = Timeout(5 seconds)
+        val future = broadcaster ? n
+        val result = Await.result(future, timeout.duration)
+        self ! result
         context.become(queuing(emptyQueue, false, false))
       } else {
-        while(queued.size > MaxQueueSize){
-          //wait or block until the queue goes back to zero or empty sized.
-        }
         context.become(queuing(queued.enqueue(e), false, false))
       }
     case CanPublishNext =>

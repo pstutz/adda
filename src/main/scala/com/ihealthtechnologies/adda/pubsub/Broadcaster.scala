@@ -87,28 +87,31 @@ class Broadcaster(
 
   def onNext(on: OnNext, pubSub: PubSubManager): Unit = {
     val s = sender
-    val handlerFuture = Future.sequence(privilegedHandlers.
-      map(handler => Future(handler(on.element))))
-    handlerFuture.onComplete {
-      case Success(_) =>
+    privilegedHandlers.map(handler => handler(on.element))
+//    val handlerFuture = Future.sequence(privilegedHandlers.
+//      map(handler => Future(handler(on.element))))
+//    handlerFuture.onComplete {
+//      case Success(_) =>
         pubSub.broadcastToSubscribers(on)
         s ! CanPublishNext
-      case Failure(e) =>
-        reportHandlerError(e)
-    }
+//      case Failure(e) =>
+//        reportHandlerError(e)
+//    }
   }
 
   def onBulkNext(bulk: Queue[_], pubSub: PubSubManager): Unit = {
     val s = sender
-    val handlerFuture = Future.sequence(privilegedHandlers.
-      map(handler => Future(bulk.map(handler))))
-    handlerFuture.onComplete {
-      case Success(_) =>
+    privilegedHandlers.map(handler => bulk.map(handler))
+    
+//    val handlerFuture = Future.sequence(privilegedHandlers.
+//      map(handler => Future(bulk.map(handler))))
+//    handlerFuture.onComplete {
+//      case Success(_) =>
         pubSub.bulkBroadcastToSubscribers(bulk)
         s ! CanPublishNext
-      case Failure(e) =>
-        reportHandlerError(e)
-    }
+//      case Failure(e) =>
+//        reportHandlerError(e)
+//    }
   }
 
   def sendingSubscriberIsTerminated(actor: ActorRef, pubSub: PubSubManager): Unit = {
