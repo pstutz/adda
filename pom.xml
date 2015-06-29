@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>com.ihealthtechnologies</groupId>
 		<artifactId>nexgen-scala-parent</artifactId>
-		<version>0.0.7</version>
+		<version>0.0.23-SNAPSHOT</version>
 	</parent>
 	<artifactId>adda</artifactId>
 	<version>0.0.8-SNAPSHOT</version>
@@ -25,12 +25,10 @@
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-stream-experimental_${scala.minor.version}</artifactId>
-			<version>1.0-RC4</version>
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-stream-testkit-experimental_${scala.minor.version}</artifactId>
-			<version>1.0-RC4</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
