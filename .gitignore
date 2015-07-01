@@ -31,3 +31,7 @@ target/*
 .settings/org.scala-ide.sdt.core.prefs
 
 *.class
+
+.cache-main
+
+.cache-tests
