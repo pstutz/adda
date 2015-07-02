@@ -67,7 +67,6 @@ class Publisher(
       case longerQueue: Any =>
         // TODO:  Once we distribute the design, ensure Kryo serializes queues efficiently.
         broadcaster ! longerQueue
-        context.become(queuing(emptyQueue, completed, false))
     }
   }
 
