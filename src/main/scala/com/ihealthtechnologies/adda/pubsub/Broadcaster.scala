@@ -6,11 +6,11 @@ import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 import scala.util.{ Failure, Success }
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props, Stash, Terminated, actorRef2Scala }
+
+import akka.actor.{ Actor, ActorLogging, ActorRef, ActorRefFactory, Props, Terminated, actorRef2Scala }
 import akka.event.LoggingReceive
 import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.util.Timeout
-import akka.actor.ActorRefFactory
 
 final case object AwaitCompleted
 
@@ -52,7 +52,7 @@ class CreatePublisher(val trackCompletion: Boolean) {
  * The `awaitingIdle' list keeps track of actors that are waiting for the subscribers of this type to complete.
  */
 class Broadcaster(
-  privilegedHandlers: List[Any => Unit]) extends Actor with ActorLogging with Stash {
+    privilegedHandlers: List[Any => Unit]) extends Actor with ActorLogging {
 
   implicit val timeout = Timeout(20 seconds)
   implicit val executor = context.dispatcher
@@ -138,13 +138,7 @@ class Broadcaster(
     }
   }
 
-  def receive: Actor.Receive = LoggingReceive {
-    // Become a broadcaster from the first message on.
-    case anything: Any =>
-      stash()
-      unstashAll()
-      context.become(broadcaster(PubSubManager()))
-  }
+  def receive: Actor.Receive = broadcaster(PubSubManager())
 
   def reportHandlerError(e: Throwable): Unit = {
     log.error(e, s"Handler(s) failed with error ${e.getMessage}.")
