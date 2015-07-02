@@ -4,14 +4,9 @@ import scala.collection.immutable.Queue
 
 import akka.actor.{ Actor, ActorLogging, ActorRef, actorRef2Scala }
 import akka.event.LoggingReceive
-import akka.stream.actor.{ RequestStrategy, WatermarkRequestStrategy }
 import akka.stream.actor.ActorSubscriber
 import akka.stream.actor.ActorSubscriberMessage.{ OnComplete, OnError, OnNext }
-
-object FlowControl {
-  private[this] val highWatermark = 50
-  val requestStrategy: RequestStrategy = WatermarkRequestStrategy(highWatermark)
-}
+import akka.stream.actor.MaxInFlightRequestStrategy
 
 /**
  * Publishes stream elements to the broadcaster actor for its type.
@@ -22,12 +17,21 @@ object FlowControl {
  * otherwise not be guaranteed.
  */
 class Publisher(
-  val trackCompletion: Boolean,
-  val broadcaster: ActorRef) extends ActorSubscriber with ActorLogging {
+    val trackCompletion: Boolean,
+    val broadcaster: ActorRef) extends ActorSubscriber with ActorLogging {
 
-  private[this] val emptyQueue = Queue.empty[Any]
+  val emptyQueue = Queue.empty[Any]
+  val maxQueueSize = 100
 
-  val requestStrategy = FlowControl.requestStrategy
+  /**
+   * The purpose of this strategy is to prevent the internal queue size of the
+   * publisher from growing larger than `maxQueueSize`.
+   */
+  val requestStrategy = new MaxInFlightRequestStrategy(maxQueueSize) {
+    override def inFlightInternally = queueSize
+  }
+  // Always updated with the current queue size.
+  var queueSize = 0
 
   /**
    * Receive function that queues received elements whilst waiting for `CanPublishNext'.
@@ -36,17 +40,17 @@ class Publisher(
     case n @ OnNext(e) =>
       if (canPublishNext) {
         broadcaster ! n
-        context.become(queuing(emptyQueue, false, false))
+        become()
       } else {
-        context.become(queuing(queued.enqueue(e), false, false))
+        become(queued.enqueue(e))
       }
     case CanPublishNext =>
-      publishNext(queued, completed)
+      publishNext(queued, completed = completed)
     case OnComplete =>
       if (canPublishNext) {
         handleCompletion
       } else {
-        context.become(queuing(queued, true, false))
+        become(queued, completed = true)
       }
     case OnError(e) =>
       reportError(e)
@@ -58,16 +62,22 @@ class Publisher(
         if (completed) {
           handleCompletion
         } else {
-          context.become(queuing(emptyQueue, false, true))
+          become(canPublishNext = true)
         }
       case Queue(singleElement) =>
         // OnNext is a light-weight wrapper compared to Queue, which internally maintains two lists.
         broadcaster ! OnNext(singleElement)
-        context.become(queuing(emptyQueue, completed, false))
+        become(completed = completed)
       case longerQueue: Any =>
         // TODO:  Once we distribute the design, ensure Kryo serializes queues efficiently.
         broadcaster ! longerQueue
+        become(completed = completed)
     }
+  }
+
+  def become(queued: Queue[Any] = emptyQueue, completed: Boolean = false, canPublishNext: Boolean = false): Unit = {
+    queueSize = queued.size
+    context.become(queuing(queued, completed, canPublishNext))
   }
 
   def handleCompletion(): Unit = {
@@ -82,3 +92,4 @@ class Publisher(
   }
 
 }
+
