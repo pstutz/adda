@@ -12,8 +12,8 @@ import com.ihealthtechnologies.adda.Adda
 
 object CharFlow extends App{
   val adda = new Adda
-  implicit val system = adda.system
-  implicit val materializer = adda.materializer
+  implicit val system = ActorSystem("Adda")
+  implicit val materializer = ActorMaterializer()
   val subscriber = adda.subscribe[Char]
   val elements = List('a','d','d','a')
   Source(elements).to(adda.publish[Char]).run()
@@ -37,8 +37,8 @@ Consider the below example:
 case class Employee(name: String, role: String)
 
 val adda = new Adda
-implicit val system = adda.system
-implicit val materializer = adda.materializer
+implicit val system = ActorSystem("Adda")
+implicit val materializer = ActorMaterializer()
 val subscriberOfEmployee = adda.subscribe[Employee]
 val publishToAdda = adda.publish[Empoyee]
 
