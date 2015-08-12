@@ -35,16 +35,18 @@ In "adda", topics are named logical channels whose names happen to be the type o
 Consider the below example:
 ```scala
 case class Employee(name: String, role: String)
+
 val adda = new Adda
 implicit val system = adda.system
 implicit val materializer = adda.materializer
-val subscriber = adda.subscribe[Employee]
+val subscriberOfEmployee = adda.subscribe[Employee]
 val publishToAdda = adda.publish[Empoyee]
+
 val emp1 = Employee("fred","manager")
 val emp2 = Employee("brett","assistant")
 Source(List(emp1, emp2)).to(publishToAdda).run()
 ```
-In the above example, a topic called "Employee" is created and the subscribers who are subscribed to the type(`Employee`) will receive all the objects of type Employee(`emp1`, `emp2`).
+In the above example, a topic called "Employee" is created and the subscribers who are subscribed to the type(`Employee`) i.e. `subscriberOfEmployee` above will receive all the objects of type Employee(`emp1`, `emp2`).
 
 In short, adda is like an object bus where publishers create objects and subscribers are subscribed to the type of the objects.
 
