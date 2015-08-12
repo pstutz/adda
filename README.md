@@ -28,7 +28,25 @@ Subscribers will receive the messages from each publisher in the order in which 
 Not yet. Adda builds on Akka and we'd like to explore to what degree Akka features such as persistent actors and its cluster support might help adding these features.
 
 # Types vs. topics: What am I publishing and what am I subscribing to?
-// TODO
+In a typical pub-sub system, "topics" are named logical channels. Subscribers will receive all the messages these channels receive.
+
+In "adda", topics are named logical channels whose names happen to be the type of the objects we intend to publish.
+
+Consider the below example:
+```scala
+case class Employee(name: String, role: String)
+val adda = new Adda
+implicit val system = adda.system
+implicit val materializer = adda.materializer
+val subscriber = adda.subscribe[Employee]
+val publishToAdda = adda.publish[Empoyee]
+val emp1 = Employee("fred","manager")
+val emp2 = Employee("brett","assistant")
+Source(List(emp1, emp2)).to(publishToAdda).run()
+```
+In the above example, a topic called "Employee" is created and the subscribers who are subscribed to the type(`Employee`) will receive all the objects of type Employee(`emp1`, `emp2`).
+
+In short, adda is like an object bus where publishers create objects and subscribers are subscribed to the type of the objects.
 
 # Does backpressure work across Adda?
 No, not yet, but it would be a nice feature.
