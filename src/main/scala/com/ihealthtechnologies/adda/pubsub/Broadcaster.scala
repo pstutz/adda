@@ -43,13 +43,13 @@ class CreateSubscriber[C: ClassTag]() {
   val className = implicitly[ClassTag[C]].runtimeClass.getName
 }
 
-class CreatePublisher(val trackCompletion: Boolean) {
+class CreatePublisher(val trackCompletion: Boolean, maxQueueSize: Int = 1) {
 
   /**
    * Allows to use a different factory for testing.
    */
   def createPublisher(f: ActorRefFactory, uniqueId: Long, broadcaster: ActorRef): ActorRef =
-    f.actorOf(Props(new Publisher(trackCompletion, broadcaster)), s"publisher${uniqueId}")
+    f.actorOf(Props(new Publisher(trackCompletion, broadcaster, maxQueueSize)), s"publisher${uniqueId}")
 
 }
 

@@ -12,7 +12,6 @@
  *  limitations under the License.
  */
 
-
 package com.ihealthtechnologies.adda.pubsub
 
 import scala.collection.immutable.Queue
@@ -33,10 +32,10 @@ import akka.stream.actor.MaxInFlightRequestStrategy
  */
 class Publisher(
     val trackCompletion: Boolean,
-    val broadcaster: ActorRef) extends ActorSubscriber with ActorLogging {
+    val broadcaster: ActorRef,
+    val maxQueueSize: Int = 1) extends ActorSubscriber with ActorLogging {
 
   val emptyQueue = Queue.empty[Any]
-  val maxQueueSize = 100
 
   /**
    * The purpose of this strategy is to prevent the internal queue size of the

@@ -103,8 +103,9 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
   it should "queue elements and bulk send them to the broadcaster" in {
     check { (streamElements: List[OnNext]) =>
       val broadcasterProbe = TestProbe()
+      val maxQueueSize = 100
       val trackCompletion = false
-      val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
+      val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref, maxQueueSize = maxQueueSize)))
       streamElements match {
         case Nil =>
         case firstElement :: remainingElements =>

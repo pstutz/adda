@@ -12,14 +12,18 @@
  *  limitations under the License.
  */
 
-
 package com.ihealthtechnologies.adda.integration
 
 import java.util.concurrent.atomic.AtomicInteger
-import org.scalatest.{ Finders, FlatSpec, Matchers }
+
+import scala.util.Random
+
+import org.scalatest.{ FlatSpec, Matchers }
+
+import com.ihealthtechnologies.adda.{ Adda, DelayingHandler }
+
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.testkit.TestSubscriber.manualProbe
-import com.ihealthtechnologies.adda.Adda
 
 class HandlerTest extends FlatSpec with Matchers {
 
@@ -58,5 +62,35 @@ class HandlerTest extends FlatSpec with Matchers {
     adda.awaitCompleted()
     adda.shutdown()
   }
+
+//  it should "slow producers via back pressure when it cannot keep up" in {
+//    val adda = new Adda(List(DelayingHandler))
+//    implicit val system = adda.system
+//    implicit val materializer = adda.materializer
+//
+//    val strings = (1 to 10000000).iterator.map(_ => Random.alphanumeric.take(100).toString)
+//
+//    var published = 0
+//    var received = 0
+//    val probe = manualProbe[String]
+//    val in = Source(() => strings).map { x =>
+//      published += 1
+//      if (published % 1 == 0) {
+//        println(s"published so far: $published")
+//      }
+//      x
+//    }.to(adda.publish[String])
+//    val out = adda.subscribe[String].map { x =>
+//      received += 1
+//      if (received % 1 == 0) {
+//        println(s"published so far: $received")
+//      }
+//      x
+//    }.to(Sink(probe))
+//    out.run
+//    in.run
+//    adda.awaitCompleted()
+//    adda.shutdown()
+//  }
 
 }
