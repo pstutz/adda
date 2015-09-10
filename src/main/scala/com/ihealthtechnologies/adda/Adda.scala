@@ -12,7 +12,6 @@
  *  limitations under the License.
  */
 
-
 package com.ihealthtechnologies.adda
 
 import scala.concurrent.{ Await, Future }
@@ -42,9 +41,9 @@ import akka.util.Timeout
  * PubSub cycles are possible, but in this case the stream completion propagation does not work.
  */
 class Adda(
-  private[this] val privilegedHandlers: List[Any => Unit] = Nil,
-  val maxPublisherQueueSize: Int = 1,
-  implicit val system: ActorSystem = ActorSystem(Adda.defaultSystemName)) extends PubSub {
+    private[this] val privilegedHandlers: List[Any => Unit] = Nil,
+    val maxPublisherQueueSize: Int = 100,
+    implicit val system: ActorSystem = ActorSystem(Adda.defaultSystemName)) extends PubSub {
 
   private[this] val broadcasterForTopic = collection.mutable.Map.empty[String, ActorRef]
 

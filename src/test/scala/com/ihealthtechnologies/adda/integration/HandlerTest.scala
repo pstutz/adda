@@ -63,34 +63,4 @@ class HandlerTest extends FlatSpec with Matchers {
     adda.shutdown()
   }
 
-//  it should "slow producers via back pressure when it cannot keep up" in {
-//    val adda = new Adda(List(DelayingHandler))
-//    implicit val system = adda.system
-//    implicit val materializer = adda.materializer
-//
-//    val strings = (1 to 10000000).iterator.map(_ => Random.alphanumeric.take(100).toString)
-//
-//    var published = 0
-//    var received = 0
-//    val probe = manualProbe[String]
-//    val in = Source(() => strings).map { x =>
-//      published += 1
-//      if (published % 1 == 0) {
-//        println(s"published so far: $published")
-//      }
-//      x
-//    }.to(adda.publish[String])
-//    val out = adda.subscribe[String].map { x =>
-//      received += 1
-//      if (received % 1 == 0) {
-//        println(s"published so far: $received")
-//      }
-//      x
-//    }.to(Sink(probe))
-//    out.run
-//    in.run
-//    adda.awaitCompleted()
-//    adda.shutdown()
-//  }
-
 }

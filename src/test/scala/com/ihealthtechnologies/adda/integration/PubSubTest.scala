@@ -69,6 +69,15 @@ class PubSubTest extends FlatSpec with Checkers with ScalaFutures {
     }
   }
 
+  it should "support single-publisher/single-subscriber when the max publisher queue size is 1" in {
+    check { (strings: List[String]) =>
+      val adda = new Adda(maxPublisherQueueSize = 1)
+      verifySingleSinkAndSourceFlow(strings, adda)
+      adda.shutdown
+      successfulTest
+    }
+  }
+  
   it should "support single-publisher/single-subscriber scenarios for multiple types at the same time" in {
     check { (ints: List[Int], doubles: List[Double], strings: List[String]) =>
       val adda = new Adda
