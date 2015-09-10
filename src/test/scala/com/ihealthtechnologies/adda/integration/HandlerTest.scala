@@ -12,14 +12,18 @@
  *  limitations under the License.
  */
 
-
 package com.ihealthtechnologies.adda.integration
 
 import java.util.concurrent.atomic.AtomicInteger
-import org.scalatest.{ Finders, FlatSpec, Matchers }
+
+import scala.util.Random
+
+import org.scalatest.{ FlatSpec, Matchers }
+
+import com.ihealthtechnologies.adda.{ Adda, DelayingHandler }
+
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.testkit.TestSubscriber.manualProbe
-import com.ihealthtechnologies.adda.Adda
 
 class HandlerTest extends FlatSpec with Matchers {
 

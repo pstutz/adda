@@ -12,7 +12,6 @@
  *  limitations under the License.
  */
 
-
 package com.ihealthtechnologies.adda
 
 import scala.concurrent.{ Await, Future }
@@ -42,8 +41,9 @@ import akka.util.Timeout
  * PubSub cycles are possible, but in this case the stream completion propagation does not work.
  */
 class Adda(
-  private[this] val privilegedHandlers: List[Any => Unit] = Nil,
-  implicit val system: ActorSystem = ActorSystem(Adda.defaultSystemName)) extends PubSub {
+    private[this] val privilegedHandlers: List[Any => Unit] = Nil,
+    val maxPublisherQueueSize: Int = 100,
+    implicit val system: ActorSystem = ActorSystem(Adda.defaultSystemName)) extends PubSub {
 
   private[this] val broadcasterForTopic = collection.mutable.Map.empty[String, ActorRef]
 
@@ -107,7 +107,7 @@ class Adda(
     implicit val timeout = Timeout(5.seconds)
     val t = topic[C]
     val b = broadcaster(t)
-    val publisherActorFuture = b ? new CreatePublisher(trackCompletion)
+    val publisherActorFuture = b ? new CreatePublisher(trackCompletion, maxPublisherQueueSize)
     // To create the sink we need to create an actor subscriber that connects the sink with the Adda publisher.
     val sinkFuture = publisherActorFuture
       .map(s => ActorSubscriber[C](s.asInstanceOf[ActorRef]))

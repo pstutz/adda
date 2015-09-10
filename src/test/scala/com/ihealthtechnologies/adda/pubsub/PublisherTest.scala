@@ -34,6 +34,8 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
 
   implicit val system = testSystem(enableTestEventListener = true)
 
+  val testedMaxQueueSize: Int = 100
+  
   override def afterAll: Unit = {
     system.shutdown
   }
@@ -41,7 +43,7 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
   "Publisher actor" should "forward a received string and complete the stream" in {
     val broadcasterProbe = TestProbe()
     val trackCompletion = true
-    val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
+    val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref, maxQueueSize = testedMaxQueueSize)))
     val emptyStringMsg = OnNext("")
     publisher ! emptyStringMsg
     broadcasterProbe.expectMsg(emptyStringMsg)
@@ -54,7 +56,7 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
     check { (streamElement: OnNext) =>
       val broadcasterProbe = TestProbe()
       val trackCompletion = false
-      val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
+      val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref, maxQueueSize = testedMaxQueueSize)))
       publisher ! streamElement
       broadcasterProbe.expectMsg(streamElement)
       successfulTest
@@ -64,7 +66,7 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
   it should "log received errors when no elements are queued" in {
     val broadcasterProbe = TestProbe()
     val trackCompletion = false
-    val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
+    val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref, maxQueueSize = testedMaxQueueSize)))
     EventFilter[TestException](occurrences = 1) intercept {
       publisher ! OnError(TestException("Just testing."))
     }
@@ -74,7 +76,7 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
     check { (streamElement: OnNext) =>
       val broadcasterProbe = TestProbe()
       val trackCompletion = false
-      val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
+      val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref, maxQueueSize = testedMaxQueueSize)))
       publisher ! streamElement
       broadcasterProbe.expectMsg(streamElement)
       EventFilter[TestException](occurrences = 1) intercept {
@@ -87,7 +89,7 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
   it should "report completion to the broadcaster when tracking is enabled" in {
     val broadcasterProbe = TestProbe()
     val trackCompletion = true
-    val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
+    val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref, maxQueueSize = testedMaxQueueSize)))
     publisher ! OnComplete
     broadcasterProbe.expectMsg(Completed)
   }
@@ -95,7 +97,7 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
   it should "not report completion to the broadcaster when tracking is disabled" in {
     val broadcasterProbe = TestProbe()
     val trackCompletion = false
-    val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
+    val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref, maxQueueSize = testedMaxQueueSize)))
     publisher ! OnComplete
     broadcasterProbe.expectNoMsg()
   }
@@ -104,7 +106,7 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
     check { (streamElements: List[OnNext]) =>
       val broadcasterProbe = TestProbe()
       val trackCompletion = false
-      val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref)))
+      val publisher = system.actorOf(Props(new Publisher(trackCompletion, broadcasterProbe.ref, maxQueueSize = testedMaxQueueSize)))
       streamElements match {
         case Nil =>
         case firstElement :: remainingElements =>
