@@ -33,7 +33,7 @@ import akka.stream.actor.MaxInFlightRequestStrategy
 class Publisher(
     val trackCompletion: Boolean,
     val broadcaster: ActorRef,
-    val maxQueueSize: Int = 1) extends ActorSubscriber with ActorLogging {
+    val maxQueueSize: Int) extends ActorSubscriber with ActorLogging {
 
   val emptyQueue = Queue.empty[Any]
 
