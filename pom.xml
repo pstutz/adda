@@ -50,6 +50,10 @@
 		<developerConnection>scm:git:${git.url}</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
+	<issueManagement>
+		<url>${ghe.url.base}/${artifactId}/issues</url>
+		<system>GitHub</system>
+	</issueManagement>
 	<dependencies>
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
