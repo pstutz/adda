@@ -1,4 +1,4 @@
-[![Build Status](https://api.travis-ci.com/cotiviti/adda.svg)](https://travis-ci.com/iHealthTechnologies/adda)
+[![Build Status](https://travis-ci.org/cotiviti/adda.svg)](https://travis-ci.org/cotiviti/adda)
 [![Codacy Badge](https://www.codacy.com/project/badge/aa61de5db91d4cd2bee902ba3534f259)](https://www.codacy.com)
 
 # What problem does Adda solve?
