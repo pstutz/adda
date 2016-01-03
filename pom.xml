@@ -20,7 +20,7 @@
 	<parent>
 		<groupId>io.cotiviti</groupId>
 		<artifactId>cotiviti-scala-parent</artifactId>
-		<version>0.2.21-SNAPSHOT</version>
+		<version>0.2.21</version>
 	</parent>
 	<artifactId>adda</artifactId>
 	<version>0.1.1-SNAPSHOT</version>
