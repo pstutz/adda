@@ -30,7 +30,7 @@ class CompletionTrackingTest extends FlatSpec with Matchers {
     implicit val materializer = ActorMaterializer()
     val elements = 100
     val probe = manualProbe[Int]
-    adda.subscribe[Int].to(Sink(probe)).run
+    adda.subscribe[Int].to(Sink.fromSubscriber(probe)).run
     Source(1 to elements).to(adda.publish[Int](trackCompletion = false)).run
     probe.expectSubscription().request(elements)
     for { i <- 1 to elements } {

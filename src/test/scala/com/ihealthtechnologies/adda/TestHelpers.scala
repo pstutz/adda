@@ -76,7 +76,7 @@ object TestHelpers {
   def verifySingleSinkAndSourceFlow[C: ClassTag](l: List[C], adda: Adda)(implicit system: ActorSystem): Boolean = {
     implicit val materializer = ActorMaterializer()
     val probe = manualProbe[C]
-    adda.subscribe[C].to(Sink(probe)).run
+    adda.subscribe[C].to(Sink.fromSubscriber(probe)).run
     Source(l).to(adda.publish[C]).run
     verifyWithProbe(l, probe)
     adda.awaitCompleted

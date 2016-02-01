@@ -47,7 +47,7 @@ class HandlerTest extends FlatSpec with Matchers {
 
     val probe = manualProbe[Int]
     val in = Source(1 to elements).to(adda.publish[Int])
-    val out = adda.subscribe[Int].to(Sink(probe))
+    val out = adda.subscribe[Int].to(Sink.fromSubscriber(probe))
     out.run
     in.run
 

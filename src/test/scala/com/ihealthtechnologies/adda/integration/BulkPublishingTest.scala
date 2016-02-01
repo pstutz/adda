@@ -33,7 +33,7 @@ class BulkPublishingTest extends FlatSpec with Matchers {
     val ascendingInts = 1 to maxElements
 
     val probe = manualProbe[Int]
-    adda.subscribe[Int].to(Sink(probe)).run
+    adda.subscribe[Int].to(Sink.fromSubscriber(probe)).run
     Source(ascendingInts).to(adda.publish[Int]).run
 
     probe.expectSubscription().request(maxElements)

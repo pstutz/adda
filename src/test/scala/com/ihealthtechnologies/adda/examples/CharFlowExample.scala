@@ -39,7 +39,7 @@ class CharFlowExample extends FlatSpec with Matchers with Checkers {
       implicit val system = adda.system
       implicit val materializer = adda.materializer
       val probes = List(manualProbe[Char], manualProbe[Char])
-      probes.foreach(probe => adda.subscribe[Char].to(Sink(probe)).run())
+      probes.foreach(probe => adda.subscribe[Char].to(Sink.fromSubscriber(probe)).run())
       Source(chars).to(adda.publish[Char]).run()
       probes.foreach(verifyWithProbe(chars, _))
       adda.awaitCompleted()

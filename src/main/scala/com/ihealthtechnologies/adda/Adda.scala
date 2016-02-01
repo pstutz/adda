@@ -101,7 +101,7 @@ class Adda(
     // To create the source we need to create an actor publisher that connects the source with the Adda subscriber.
     val sourceFuture = subscriberActorFuture
       .map(p => ActorPublisher[C](p.asInstanceOf[ActorRef]))
-      .map(Source(_))
+      .map(Source.fromPublisher(_))
     Await.result(sourceFuture, 5.seconds)
   }
 
@@ -113,7 +113,7 @@ class Adda(
     // To create the sink we need to create an actor subscriber that connects the sink with the Adda publisher.
     val sinkFuture = publisherActorFuture
       .map(s => ActorSubscriber[C](s.asInstanceOf[ActorRef]))
-      .map(Sink(_))
+      .map(Sink.fromSubscriber(_))
     Await.result(sinkFuture, 5.seconds)
   }
 

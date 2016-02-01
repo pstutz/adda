@@ -43,8 +43,8 @@ class SubscriberTest extends FlatSpec with Checkers with Matchers with BeforeAnd
   "Subscriber actor" should "stream a received empty string" in {
     val streamProbe = manualProbe[String]
     val subscriber = system.actorOf(Props(new Subscriber[String]))
-    val source = Source(ActorPublisher[String](subscriber))
-    source.to(Sink(streamProbe)).run
+    val source = Source.fromPublisher(ActorPublisher[String](subscriber))
+    source.to(Sink.fromSubscriber(streamProbe)).run
     subscriber ! OnNext("")
     subscriber ! Complete
     verifyWithProbe[String](List(""), streamProbe)
@@ -54,8 +54,8 @@ class SubscriberTest extends FlatSpec with Checkers with Matchers with BeforeAnd
     check { (streamStrings: List[String]) =>
       val streamProbe = manualProbe[String]
       val subscriber = system.actorOf(Props(new Subscriber[String]))
-      val source = Source(ActorPublisher[String](subscriber))
-      source.to(Sink(streamProbe)).run
+      val source = Source.fromPublisher(ActorPublisher[String](subscriber))
+      source.to(Sink.fromSubscriber(streamProbe)).run
       for { streamElement <- streamStrings } {
         subscriber ! OnNext(streamElement)
       }
@@ -69,8 +69,8 @@ class SubscriberTest extends FlatSpec with Checkers with Matchers with BeforeAnd
     check { (streamStringLists: List[List[String]]) =>
       val streamProbe = manualProbe[String]
       val subscriber = system.actorOf(Props(new Subscriber[String]))
-      val source = Source(ActorPublisher[String](subscriber))
-      source.to(Sink(streamProbe)).run
+      val source = Source.fromPublisher(ActorPublisher[String](subscriber))
+      source.to(Sink.fromSubscriber(streamProbe)).run
       for { streamStringList <- streamStringLists } {
         subscriber ! Queue(streamStringList: _*)
       }

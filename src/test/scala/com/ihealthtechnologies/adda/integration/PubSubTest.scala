@@ -85,9 +85,9 @@ class PubSubTest extends FlatSpec with Checkers with ScalaFutures {
       val intProbe = manualProbe[Int]
       val doubleProbe = manualProbe[Double]
       val stringProbe = manualProbe[String]
-      adda.subscribe[Int].to(Sink(intProbe)).run
-      adda.subscribe[Double].to(Sink(doubleProbe)).run
-      adda.subscribe[String].to(Sink(stringProbe)).run
+      adda.subscribe[Int].to(Sink.fromSubscriber(intProbe)).run
+      adda.subscribe[Double].to(Sink.fromSubscriber(doubleProbe)).run
+      adda.subscribe[String].to(Sink.fromSubscriber(stringProbe)).run
       val publishers = List(
         Source(ints).to(adda.publish[Int]),
         Source(doubles).to(adda.publish[Double]),
@@ -109,8 +109,8 @@ class PubSubTest extends FlatSpec with Checkers with ScalaFutures {
           val adda = new Adda
           val probeA = manualProbe[String]
           val probeB = manualProbe[String]
-          adda.subscribe[String].to(Sink(probeA)).run
-          adda.subscribe[String].to(Sink(probeB)).run
+          adda.subscribe[String].to(Sink.fromSubscriber(probeA)).run
+          adda.subscribe[String].to(Sink.fromSubscriber(probeB)).run
           Source(strings).to(adda.publish[String]).run
           verifyWithProbe(strings, probeA)
           verifyWithProbe(strings, probeB)
@@ -213,7 +213,7 @@ class PubSubTest extends FlatSpec with Checkers with ScalaFutures {
         (strings: List[String], numberOfSubscribers: Int) =>
           val adda = new Adda
           val probe = manualProbe[String]
-          adda.subscribe[String].take(1).to(Sink(probe)).run
+          adda.subscribe[String].take(1).to(Sink.fromSubscriber(probe)).run
           Source(strings).to(adda.publish[String]).run
           verifyWithProbe(strings.take(1), probe)
           adda.awaitCompleted
@@ -230,7 +230,7 @@ class PubSubTest extends FlatSpec with Checkers with ScalaFutures {
           val adda = new Adda
           adda.awaitCompleted
           val probe = manualProbe[String]
-          adda.subscribe[String].to(Sink(probe)).run
+          adda.subscribe[String].to(Sink.fromSubscriber(probe)).run
           Source(strings).to(adda.publish[String]).run
           verifyWithProbe(strings, probe)
           adda.awaitCompleted
