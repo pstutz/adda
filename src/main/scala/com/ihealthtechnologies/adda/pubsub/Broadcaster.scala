@@ -22,7 +22,7 @@ import scala.language.postfixOps
 import scala.reflect.ClassTag
 import scala.util.{ Failure, Success }
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, ActorRefFactory, Props, Terminated, actorRef2Scala }
+import akka.actor._
 import akka.event.LoggingReceive
 import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.util.Timeout

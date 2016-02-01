@@ -32,7 +32,7 @@ class HandlerTest extends FlatSpec with Matchers {
 
     val counter = new AtomicInteger
 
-    def intHandler(e: Any) = {
+    def intHandler(e: Any): Int = {
       e match {
         case i: Int => counter.addAndGet(i)
         case _      => throw new Exception(s"Handler received an unexpected message.")

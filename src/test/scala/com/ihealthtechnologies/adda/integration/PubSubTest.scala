@@ -1,18 +1,18 @@
 /**
- * Copyright (C) 2015 Cotiviti Labs (nexgen.admin@cotiviti.io)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright (C) 2015 Cotiviti Labs (nexgen.admin@cotiviti.io)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package com.ihealthtechnologies.adda.integration
 
 import org.scalatest.time.{Millis, Seconds, Span}
@@ -23,19 +23,19 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import org.scalacheck.Arbitrary.arbContainer
 import org.scalacheck.Prop
 import org.scalacheck.Prop.propBoolean
-import org.scalatest.{ Finders, FlatSpec }
-import org.scalatest.Matchers.{ be, convertToAnyShouldWrapper }
+import org.scalatest.{Finders, FlatSpec}
+import org.scalatest.Matchers.{be, convertToAnyShouldWrapper}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.Checkers
 
 import com.ihealthtechnologies.adda.Adda
-import com.ihealthtechnologies.adda.Generators.{ genListOfStringPublishers, genStringPublisher, genSubscriberCount }
+import com.ihealthtechnologies.adda.Generators.{genListOfStringPublishers, genStringPublisher, genSubscriberCount}
 import com.ihealthtechnologies.adda.TestConstants.successfulTest
 import com.ihealthtechnologies.adda.TestHelpers._
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.{ Sink, Source }
+import akka.stream.scaladsl.{Sink, Source}
 import akka.stream.testkit.TestSubscriber.manualProbe
 
 class PubSubTest extends FlatSpec with Checkers with ScalaFutures {
@@ -77,7 +77,7 @@ class PubSubTest extends FlatSpec with Checkers with ScalaFutures {
       successfulTest
     }
   }
-  
+
   it should "support single-publisher/single-subscriber scenarios for multiple types at the same time" in {
     check { (ints: List[Int], doubles: List[Double], strings: List[String]) =>
       val adda = new Adda
@@ -190,7 +190,7 @@ class PubSubTest extends FlatSpec with Checkers with ScalaFutures {
       Prop.forAll(genListOfStringPublishers, genSubscriberCount) {
         (listOfStringLists: List[List[String]], numberOfSubscribers: Int) =>
           val adda = new Adda
-          for { strings <- listOfStringLists } {
+          for {strings <- listOfStringLists} {
             val subscriberResultSetFutures = List.fill(numberOfSubscribers)(
               adda.subscribe[String].runFold(Set.empty[String])(aggregateIntoSet))
             Source(strings).to(adda.publish[String]).run
