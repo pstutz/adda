@@ -84,7 +84,6 @@ class Publisher(
         broadcaster ! OnNext(singleElement)
         become(completed = completed)
       case longerQueue: Any =>
-        // TODO:  Once we distribute the design, ensure Kryo serializes queues efficiently.
         broadcaster ! longerQueue
         become(completed = completed)
     }
