@@ -61,7 +61,7 @@ class Subscriber[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
    */
   def deliverFromQueue(q: Queue[C], completed: Boolean): Queue[C] = {
     if (totalDemand >= q.size) {
-      q.foreach(onNext(_))
+      q.foreach(onNext)
       if (completed) {
         onComplete()
         context.stop(self)
@@ -70,8 +70,9 @@ class Subscriber[C: ClassTag] extends ActorPublisher[C] with ActorLogging {
     } else if (totalDemand == 0) {
       q
     } else {
+      // totalDemand.toInt is safe, because if totalDemand > Int.MaxValue, then the first if branch would have matched.
       val (toDeliver, remaining) = q.splitAt(totalDemand.toInt)
-      toDeliver.foreach(onNext(_))
+      toDeliver.foreach(onNext)
       remaining
     }
   }
