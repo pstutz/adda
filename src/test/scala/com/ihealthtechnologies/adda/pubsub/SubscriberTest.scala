@@ -31,13 +31,16 @@ import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.testkit.TestSubscriber.manualProbe
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
 class SubscriberTest extends FlatSpec with Checkers with Matchers with BeforeAndAfterAll {
 
   implicit val system = testSystem(enableTestEventListener = true)
   implicit val materializer = ActorMaterializer()
 
   override def afterAll: Unit = {
-    system.terminate()
+    Await.ready(system.terminate(), 300.seconds)
   }
 
   "Subscriber actor" should "stream a received empty string" in {

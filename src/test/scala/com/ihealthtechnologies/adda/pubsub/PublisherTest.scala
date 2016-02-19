@@ -29,6 +29,9 @@ import akka.actor.{Props, actorRef2Scala}
 import akka.stream.actor.ActorSubscriberMessage.{OnComplete, OnError, OnNext}
 import akka.testkit.{EventFilter, TestProbe}
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
 case class TestException(msg: String) extends Exception(msg)
 
 class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndAfterAll {
@@ -38,7 +41,7 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
   val testedMaxQueueSize: Int = 100
 
   override def afterAll: Unit = {
-    system.terminate()
+    Await.ready(system.terminate(), 300.seconds)
   }
 
   "Publisher actor" should "forward a received string and complete the stream" in {

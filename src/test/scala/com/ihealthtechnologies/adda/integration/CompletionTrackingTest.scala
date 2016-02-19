@@ -21,6 +21,9 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.testkit.TestSubscriber.manualProbe
 import com.ihealthtechnologies.adda.Adda
+import scala.concurrent.duration._
+
+import scala.concurrent.Await
 
 class CompletionTrackingTest extends FlatSpec with Matchers {
 
@@ -38,6 +41,7 @@ class CompletionTrackingTest extends FlatSpec with Matchers {
     }
     probe.expectNoMsg()
     adda.shutdown()
+    Await.ready(system.terminate(), 300.seconds)
   }
 
 }

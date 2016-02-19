@@ -19,12 +19,13 @@ package com.ihealthtechnologies.adda.integration
 import org.scalatest.time.{Millis, Seconds, Span}
 
 import scala.annotation.tailrec
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import org.scalacheck.Arbitrary.arbContainer
 import org.scalacheck.Prop
 import org.scalacheck.Prop.propBoolean
-import org.scalatest.{Finders, FlatSpec}
+import org.scalatest.{BeforeAndAfterAll, Finders, FlatSpec}
 import org.scalatest.Matchers.{be, convertToAnyShouldWrapper}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.Checkers
@@ -38,8 +39,9 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source}
 import akka.stream.testkit.TestSubscriber.manualProbe
+import scala.concurrent.duration._
 
-class PubSubTest extends FlatSpec with Checkers with ScalaFutures {
+class PubSubTest extends FlatSpec with Checkers with ScalaFutures with BeforeAndAfterAll {
   implicit val system = ActorSystem("Test")
   implicit val materializer = ActorMaterializer()
   private[this] val span = 10
@@ -48,6 +50,10 @@ class PubSubTest extends FlatSpec with Checkers with ScalaFutures {
 
   private[this] val subsequenceNotFound =
     "Sequence published by one of the publishers was not a subsequence of the sequence received by the subscriber."
+
+  override def afterAll(): Unit = {
+    Await.ready(system.terminate(), 300.seconds)
+  }
 
   "PubSub" should "support streaming an empty list" in {
     val adda = new Adda

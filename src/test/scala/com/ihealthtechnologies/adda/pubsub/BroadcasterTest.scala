@@ -18,6 +18,7 @@
 package com.ihealthtechnologies.adda.pubsub
 
 import scala.collection.immutable.Queue
+import scala.concurrent.Await
 import scala.reflect.ClassTag
 
 import org.scalatest.{ BeforeAndAfterAll, FlatSpec, Matchers }
@@ -30,6 +31,7 @@ import com.ihealthtechnologies.adda.TestHelpers.testSystem
 import akka.actor.{ ActorRef, ActorRefFactory, Props, actorRef2Scala }
 import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.testkit.{ EventFilter, TestProbe }
+import scala.concurrent.duration._
 
 class PublisherInjector(injectedActorRef: ActorRef, trackCompletion: Boolean)
   extends CreatePublisher(trackCompletion: Boolean) {
@@ -47,7 +49,7 @@ class BroadcasterTest extends FlatSpec with Checkers with Matchers with BeforeAn
   implicit val system = testSystem(enableTestEventListener = true)
 
   override def afterAll: Unit = {
-    system.terminate()
+    Await.ready(system.terminate(), 300.seconds)
   }
 
   private[this] val failingHandler: Any => Unit = { a: Any =>
