@@ -38,7 +38,7 @@ class PublisherTest extends FlatSpec with Checkers with Matchers with BeforeAndA
   val testedMaxQueueSize: Int = 100
 
   override def afterAll: Unit = {
-    system.shutdown
+    system.terminate()
   }
 
   "Publisher actor" should "forward a received string and complete the stream" in {

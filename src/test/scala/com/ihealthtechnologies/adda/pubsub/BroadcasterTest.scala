@@ -47,7 +47,7 @@ class BroadcasterTest extends FlatSpec with Checkers with Matchers with BeforeAn
   implicit val system = testSystem(enableTestEventListener = true)
 
   override def afterAll: Unit = {
-    system.shutdown
+    system.terminate()
   }
 
   private[this] val failingHandler: Any => Unit = { a: Any =>

@@ -37,7 +37,7 @@ class SubscriberTest extends FlatSpec with Checkers with Matchers with BeforeAnd
   implicit val materializer = ActorMaterializer()
 
   override def afterAll: Unit = {
-    system.shutdown
+    system.terminate()
   }
 
   "Subscriber actor" should "stream a received empty string" in {

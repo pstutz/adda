@@ -15,6 +15,8 @@
  */
 package com.ihealthtechnologies.adda.interfaces
 
+import akka.NotUsed
+
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
 
@@ -35,7 +37,7 @@ trait PubSub {
   /**
    * Returns an Akka Streams source that is subscribed to objects that are published to sinks of type `C'.
    */
-  def subscribe[C: ClassTag]: Source[C, Unit]
+  def subscribe[C: ClassTag]: Source[C, NotUsed]
 
   /**
    * Returns an Akka Streams sink that allows to publish objects of type `C'.
@@ -43,7 +45,7 @@ trait PubSub {
    * The pubsub system tracks completion for this publisher and completes all subscribers for a type,
    * when the number of tracked publishers for this type was > 0, and then falls back to 0.
    */
-  def publish[C: ClassTag]: Sink[C, Unit] = publish[C](trackCompletion = true)
+  def publish[C: ClassTag]: Sink[C, NotUsed] = publish[C](trackCompletion = true)
 
   /**
    * Returns an Akka Streams sink that allows to publish objects of type `C'.
@@ -53,7 +55,7 @@ trait PubSub {
    * The pubsub system completes all subscribers for a type, when the number of tracked publishers
    * for this type was > 0, and then falls back to 0.
    */
-  def publish[C: ClassTag](trackCompletion: Boolean): Sink[C, Unit]
+  def publish[C: ClassTag](trackCompletion: Boolean): Sink[C, NotUsed]
 
   /**
    * Blocking call that returns once all the publishers and subscribers have completed.

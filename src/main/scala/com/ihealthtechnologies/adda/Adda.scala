@@ -16,6 +16,8 @@
 
 package com.ihealthtechnologies.adda
 
+import akka.NotUsed
+
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration.DurationInt
 import scala.reflect.ClassTag
@@ -53,11 +55,11 @@ class Adda(
   implicit val executor = system.dispatcher
   private[this] val log = Logging.getLogger(system.eventStream, Adda.defaultSystemName)
 
-  def subscribe[C: ClassTag]: Source[C, Unit] = {
+  def subscribe[C: ClassTag]: Source[C, NotUsed] = {
     createSubscriptionSource[C]
   }
 
-  def publish[C: ClassTag](trackCompletion: Boolean = true): Sink[C, Unit] = {
+  def publish[C: ClassTag](trackCompletion: Boolean = true): Sink[C, NotUsed] = {
     createPublicationSink[C](trackCompletion)
   }
 
@@ -68,8 +70,7 @@ class Adda(
 
   def shutdown(): Unit = {
     log.debug("Shutting down Adda ...")
-    system.shutdown()
-    system.awaitTermination()
+    Await.ready(system.terminate(), 300.seconds)
     log.debug("Adda has shut down.")
   }
 
@@ -93,19 +94,19 @@ class Adda(
   /**
    * To create a publisher we also need to create a subscriber that connects with it from inside Adda.
    */
-  private[this] def createSubscriptionSource[C: ClassTag]: Source[C, Unit] = {
+  private[this] def createSubscriptionSource[C: ClassTag]: Source[C, NotUsed] = {
     implicit val timeout = Timeout(5.seconds)
     val t = topic[C]
     val b = broadcaster(t)
     val subscriberActorFuture = b ? new CreateSubscriber[C]()
     // To create the source we need to create an actor publisher that connects the source with the Adda subscriber.
-    val sourceFuture = subscriberActorFuture
+    val sourceFuture: Future[Source[C, NotUsed]] = subscriberActorFuture
       .map(p => ActorPublisher[C](p.asInstanceOf[ActorRef]))
       .map(Source.fromPublisher(_))
     Await.result(sourceFuture, 5.seconds)
   }
 
-  private[this] def createPublicationSink[C: ClassTag](trackCompletion: Boolean): Sink[C, Unit] = {
+  private[this] def createPublicationSink[C: ClassTag](trackCompletion: Boolean): Sink[C, NotUsed] = {
     implicit val timeout = Timeout(5.seconds)
     val t = topic[C]
     val b = broadcaster(t)
